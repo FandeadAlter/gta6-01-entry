@@ -1,11 +1,12 @@
 // Save: the whole save/load job for Solmar Bay, in one place. One
 // localStorage key holds mission progress, money, health, armor, the weapon,
 // Lena's position, the current car (model, position, damage) and whether she
-// is driving it. Version 2 adds the Step 4 fields; a version 1 save (money,
-// player, car, inCar only) still loads, with the new fields at their defaults.
+// is driving it. Version 3 adds the Step 5 fields (sun postcards, garage
+// cars, best race time, side-activity earnings); a version 1 or 2 save still
+// loads, with the new fields at their defaults.
 import { SAVE_KEY, VEHICLES } from './config.js';
 
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 /** The shape a save has on disk. Defaults are a fresh game at the garage. */
 export function defaultSave() {
@@ -22,6 +23,12 @@ export function defaultSave() {
     player: { x: -176, z: -136, heading: Math.PI },
     car: { x: -180, z: -124, heading: Math.PI, specKey: 'alba', damage: 0 },
     inCar: false,
+    postcards: [],
+    garageOwned: [],
+    bestRaceSeconds: 0,
+    taxiEarned: 0,
+    courierEarned: 0,
+    racesWon: 0,
   };
 }
 
@@ -72,6 +79,12 @@ export function buildSave(state) {
       damage: state.car.damage,
     },
     inCar: state.inCar,
+    postcards: state.postcards || [],
+    garageOwned: state.garageOwned || [],
+    bestRaceSeconds: state.bestRaceSeconds || 0,
+    taxiEarned: state.taxiEarned || 0,
+    courierEarned: state.courierEarned || 0,
+    racesWon: state.racesWon || 0,
   };
 }
 
@@ -110,5 +123,11 @@ export function applySaveData(save, game) {
     ammoInMag: save.ammoInMag || 0,
     ammoReserve: save.ammoReserve || 0,
     inCar: Boolean(save.inCar),
+    postcards: Array.isArray(save.postcards) ? save.postcards : [],
+    garageOwned: Array.isArray(save.garageOwned) ? save.garageOwned : [],
+    bestRaceSeconds: save.bestRaceSeconds || 0,
+    taxiEarned: save.taxiEarned || 0,
+    courierEarned: save.courierEarned || 0,
+    racesWon: save.racesWon || 0,
   };
 }

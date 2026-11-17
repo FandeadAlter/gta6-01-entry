@@ -24,6 +24,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1410; fon
 #prompt { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%); font-size: 17px; font-weight: 600; background: rgba(0, 0, 0, 0.55); padding: 8px 16px; border-radius: 6px; }
 #armor-fill { height: 100%; width: 0; background: #5aa8e8; }
 #mission-name { font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #f2c94c; text-align: center; margin-bottom: 4px; }
+#activity-line { font-size: 15px; font-weight: 600; color: #35e0e0; background: rgba(0, 0, 0, 0.45); padding: 5px 14px; border-radius: 6px; text-align: center; margin-top: 6px; }
 #mission-timer { display: inline-block; margin-top: 6px; font-size: 20px; font-weight: 800; color: #ffe14f; background: rgba(0, 0, 0, 0.45); padding: 4px 12px; border-radius: 6px; }
 #weapon-line { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
 #ammo { color: #ffe14f; margin-left: 8px; }

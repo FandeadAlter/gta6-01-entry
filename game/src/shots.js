@@ -29,6 +29,23 @@ export function stageShot(name, game) {
     game.setObjective('Explore Solmar Bay');
     return;
   }
+  if (name === 'activities') {
+    // Side activities on Palm Row: Lena in the Harbor Taxi with a passenger
+    // aboard, the gold fare beacon ahead, a sun postcard on the roadside,
+    // traffic in the next lane, the fare line on the HUD. The taxi starts
+    // well back from the destination, so the beacon reads at a distance.
+    game.placeCar(-100, 246, Math.PI / 2, 'taxi');
+    game.placePlayer(-100, 242, Math.PI / 2);
+    game.setInCar(true);
+    game.placeTraffic([
+      { axis: 'x', road: 252, along: 10, direction: 1 },
+      { axis: 'x', road: 252, along: 55, direction: 1 },
+      { axis: 'x', road: 252, along: -70, direction: -1 },
+    ]);
+    game.stageActivities();
+    game.setCamera({ mode: 'follow', yaw: Math.PI / 2, pitch: 0.18, distance: 9.5 });
+    return;
+  }
   if (name === 'mission') {
     // Mission 4, "Harbor Lights": a shootout at the Old Harbor dock — Lena
     // on foot with the pistol, three of Kaine's men ahead, health and armor
@@ -58,6 +75,10 @@ export function stageShot(name, game) {
   game.placeCar(-40, 246, Math.PI / 2);
   game.placePlayer(-40, 242, Math.PI / 2);
   game.setInCar(true);
+  game.placeTraffic([
+    { axis: 'x', road: 252, along: 10, direction: 1 },
+    { axis: 'x', road: 252, along: 60, direction: 1 },
+  ]);
   game.setCamera({ mode: 'follow', yaw: Math.PI / 2, pitch: 0.18, distance: 9.5 });
   game.setObjective(MISSIONS[0].objective);
 }

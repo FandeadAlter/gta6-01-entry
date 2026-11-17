@@ -26,6 +26,7 @@ export class HudManager {
       armorFill: doc.getElementById('armor-fill'),
       armorBar: doc.getElementById('armor-bar'),
       objective: doc.getElementById('objective'),
+      activityLine: doc.getElementById('activity-line'),
       missionName: doc.getElementById('mission-name'),
       missionTimer: doc.getElementById('mission-timer'),
       speed: doc.getElementById('speed-value'),
@@ -44,7 +45,7 @@ export class HudManager {
     };
     this.minimapContext = this.el.minimap.getContext('2d');
     this.last = {
-      money: -1, health: -1, armor: -1, wanted: -1, objective: '',
+      money: -1, health: -1, armor: -1, wanted: -1, objective: '', activity: '',
       // speed starts at -2 (not -1) so the first update also hides the
       // "km/h" unit when Lena is on foot; -1 is the on-foot speed itself.
       missionName: '', timer: '', speed: -2, prompt: null, district: '',
@@ -63,7 +64,7 @@ export class HudManager {
   }
 
   drawMinimap(world) {
-    const { player, car, traffic, fleet, police, missions, combat } = world;
+    const { player, car, traffic, fleet, police, missions, combat, activities, collectibles, garage } = world;
     const canvas = this.el.minimap;
     const size = canvas.width;
     const scale = size / 580;
@@ -157,6 +158,36 @@ export class HudManager {
         ctx.fill();
       }
     }
+    // The garage: a green square at Rosa's place, so the save spot is findable.
+    if (garage) {
+      ctx.fillStyle = '#5ec96a';
+      const [gx, gy] = toMap(-180, -124);
+      ctx.fillRect(gx - 3, gy - 3, 6, 6);
+    }
+    // The active activity target: a cyan diamond, beside the mission blip.
+    if (activities) {
+      const point = activities.waypoint();
+      if (point) {
+        const [ax, ay] = toMap(point.x, point.z);
+        ctx.fillStyle = '#35e0e0';
+        ctx.beginPath();
+        ctx.moveTo(ax, ay - 5);
+        ctx.lineTo(ax + 5, ay);
+        ctx.lineTo(ax, ay + 5);
+        ctx.lineTo(ax - 5, ay);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+    // Sun postcards still out there: tiny gold dots, so the hunt reads on the map.
+    if (collectibles) {
+      ctx.fillStyle = '#f2c94c';
+      for (const card of collectibles.cards) {
+        if (card.found) continue;
+        const [cx, cy] = toMap(card.x, card.z);
+        ctx.fillRect(cx - 1, cy - 1, 2, 2);
+      }
+    }
     // The player's car, then the player arrow on top.
     const [carX, carY] = toMap(car.x, car.z);
     ctx.fillStyle = '#f2c94c';
@@ -209,6 +240,12 @@ export class HudManager {
     if (state.objective !== this.last.objective) {
       this.last.objective = state.objective;
       el.objective.textContent = state.objective;
+    }
+    const activityText = state.activityLine || '';
+    if (activityText !== this.last.activity) {
+      this.last.activity = activityText;
+      el.activityLine.textContent = activityText;
+      el.activityLine.style.visibility = activityText ? 'visible' : 'hidden';
     }
     if (state.missionName !== this.last.missionName) {
       this.last.missionName = state.missionName;

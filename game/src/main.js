@@ -8,7 +8,7 @@
 // ?seed=N fixes the city layout. ?shot=drive|street|city|chase|mission (with
 // &seed=N) stages that scene instead of running the loop, paints it twice and
 // sets window.__shotReady for a screenshot.
-import { CAMERA, MISSIONS, PLAYER, SPAWN, STEP, VEHICLES } from './config.js';
+import { ACTIVITIES, CAMERA, MISSIONS, PLAYER, SPAWN, STEP, VEHICLES } from './config.js';
 import { createRandom } from './random.js';
 import { ACTION_CONFIRM, ACTION_ENTER, ACTION_JUMP, ACTION_PAUSE, ACTION_RELOAD, createInput } from './input.js';
 import { createRenderer, SCREEN_PAUSED, SCREEN_PLAY, SCREEN_TITLE } from './render.js';
@@ -21,6 +21,9 @@ import { EffectsManager } from './effects.js';
 import { MissionManager, MISSION_DEFS, HARBOR_ENEMY_SPOTS } from './missions.js';
 import { StoryManager, MISSION_DIALOGUE, BARKS } from './story.js';
 import { CombatManager, WEAPON_FISTS } from './combat.js';
+import { ActivityManager } from './activities.js';
+import { CollectiblesManager } from './collectibles.js';
+import { GarageManager } from './garage.js';
 import { HudManager } from './hud.js';
 import { AudioManager } from './audio.js';
 import { applySaveData, buildSave, readSave, writeSaveData } from './save.js';
@@ -45,6 +48,9 @@ const effects = new EffectsManager(renderer.scene);
 const missions = new MissionManager(renderer.scene);
 const story = new StoryManager();
 const combat = new CombatManager(renderer.scene);
+const activities = new ActivityManager(renderer.scene);
+const collectibles = new CollectiblesManager(renderer.scene);
+const garage = new GarageManager(renderer.scene);
 const hud = new HudManager(document, city);
 const audio = new AudioManager();
 
@@ -97,6 +103,12 @@ function saveGame() {
     player,
     car,
     inCar: state.inCar,
+    postcards: collectibles.foundIds(),
+    garageOwned: garage.owned,
+    bestRaceSeconds: activities.bestRaceSeconds,
+    taxiEarned: activities.taxiEarned,
+    courierEarned: activities.courierEarned,
+    racesWon: activities.racesWon,
   }));
 }
 
@@ -120,6 +132,13 @@ function loadGame() {
     combat.ammoInMag = patch.ammoInMag;
     combat.ammoReserve = patch.ammoReserve;
   }
+  collectibles.setFound(patch.postcards);
+  garage.setOwned(patch.garageOwned);
+  garage.syncOwned(car.specKey);
+  activities.bestRaceSeconds = patch.bestRaceSeconds;
+  activities.taxiEarned = patch.taxiEarned;
+  activities.courierEarned = patch.courierEarned;
+  activities.racesWon = patch.racesWon;
   cameraView.yaw = player.heading;
   missions.start(state.missionIndex);
   story.say(MISSION_DIALOGUE[state.missionIndex].intro);
@@ -134,6 +153,14 @@ function newGame() {
   state.wanted = 0;
   police.clearWanted();
   combat.clearEnemies();
+  activities.endActivity();
+  collectibles.setFound([]);
+  garage.setOwned([]);
+  garage.syncOwned('alba');
+  activities.bestRaceSeconds = 0;
+  activities.taxiEarned = 0;
+  activities.courierEarned = 0;
+  activities.racesWon = 0;
   combat.weapon = WEAPON_FISTS;
   combat.ammoInMag = 0;
   combat.ammoReserve = 0;
@@ -278,6 +305,64 @@ function nearCar() {
   return Math.hypot(player.x - car.x, player.z - car.z) < 4;
 }
 
+/** Act on the events the side-activity and collectible managers queued. */
+function handleActivityEvents() {
+  for (const event of activities.takeEvents()) {
+    if (event === 'activity-started:taxi') {
+      story.sayOne('lena', 'A fare! Palm Row, coming right up.');
+    } else if (event === 'activity-started:taxi-dropoff') {
+      announce('Taxi fare — drive to the gold marker.');
+    } else if (event === 'activity-started:courier') {
+      story.sayOne('rosa', 'Three parcels, Lena — the clock is running.');
+      announce('Courier run — three parcels, on the clock.');
+    } else if (event === 'activity-started:race') {
+      story.sayOne('lena', 'Race on! Beat them to the last checkpoint.');
+      announce('Street race — hit every pink ring.');
+    } else if (event.startsWith('taxi-paid:')) {
+      const pay = Number(event.split(':')[1]);
+      state.money += pay;
+      audio.pickup();
+      announce(`Fare paid — $${pay}.`);
+    } else if (event.startsWith('courier-drop:')) {
+      const pay = Number(event.split(':')[1]);
+      state.money += pay;
+      audio.pickup();
+      announce(`Parcel delivered — $${pay}.`);
+    } else if (event.startsWith('courier-bonus:')) {
+      const pay = Number(event.split(':')[1]);
+      state.money += pay;
+      audio.missionComplete();
+      announce(`All parcels on time — $${pay} bonus.`);
+    } else if (event.startsWith('race-checkpoint:')) {
+      audio.uiClick();
+    } else if (event.startsWith('race-won:')) {
+      const pay = Number(event.split(':')[1]);
+      state.money += pay;
+      audio.missionComplete();
+      announce(`Race finished — $${pay}.`);
+    } else if (event.startsWith('activity-failed:')) {
+      audio.missionFailed();
+      announce(event.endsWith('taxi-late') ? 'Too slow — the passenger got out.'
+        : event.endsWith('race-time') ? 'The race moved on without you.'
+        : 'Too slow — the parcels went back to Rosa.');
+    }
+  }
+  for (const event of collectibles.takeEvents()) {
+    if (event.startsWith('postcard:')) {
+      const count = Number(event.split(':')[1]);
+      audio.pickup();
+      announce(`Sun postcard ${count} of 20.`);
+    } else if (event.startsWith('postcards-complete:')) {
+      const pay = Number(event.split(':')[1]);
+      state.money += pay;
+      audio.missionComplete();
+      story.sayOne('rosa', 'All twenty postcards! Solmar Bay suits you, Lena.');
+      announce(`All 20 sun postcards — $${pay}.`);
+      saveGame();
+    }
+  }
+}
+
 /** Act on the events the mission and combat managers queued this step. */
 function handleEvents() {
   for (const event of missions.takeEvents()) {
@@ -350,12 +435,41 @@ function stepWorld(dt, input, actions) {
         3,
         player.z - Math.cos(cameraView.yaw) * CAMERA.footDistance,
       );
+      // Getting out inside the green garage ring keeps the car and saves.
+      if (garage.isInGarage(car.x, car.z)) {
+        const kept = garage.parkCar(car.specKey);
+        garage.syncOwned(car.specKey);
+        saveGame();
+        announce(kept
+          ? `Saved at Rosa's garage — the ${car.spec.name} is kept.`
+          : 'Saved at Rosa\'s garage.');
+      }
     } else if (nearCar()) {
       state.inCar = true;
       player.x = car.x;
       player.z = car.z;
       cameraView.distance = CAMERA.carDistance;
     } else {
+      // Take a kept car out of the garage: it becomes the car Lena drives.
+      const stored = garage.nearestStored(player.x, player.z);
+      if (stored) {
+        garage.takeStored(stored.specKey);
+        car.specKey = stored.specKey;
+        car.spec = VEHICLES[stored.specKey];
+        car.x = stored.x;
+        car.z = stored.z;
+        car.heading = stored.heading;
+        car.speed = 0;
+        car.steer = 0;
+        car.damage = 0;
+        renderer.swapPlayerCar(car.spec);
+        state.inCar = true;
+        player.x = car.x;
+        player.z = car.z;
+        player.heading = car.heading;
+        cameraView.distance = CAMERA.carDistance;
+        announce(`Took the ${car.spec.name} out of the garage.`);
+      } else {
       // Steal a parked car: it becomes the car Lena drives, and the police notice.
       const parked = fleet.nearestParked(player.x, player.z);
       if (parked) {
@@ -377,6 +491,7 @@ function stepWorld(dt, input, actions) {
         police.onCarTheft();
         story.say(BARKS.stolen);
         announce(`Stole the ${car.spec.name}. The SBPD noticed.`);
+      }
       }
     }
   }
@@ -430,6 +545,12 @@ function stepWorld(dt, input, actions) {
   state.wanted = police.wanted;
   handleEvents();
 
+  // Side activities, postcards and the garage advance on the same fixed step.
+  activities.update(dt, { player, car, inCar: state.inCar });
+  collectibles.update(dt, { player, car, inCar: state.inCar });
+  garage.update(dt);
+  handleActivityEvents();
+
   // Hitting a pedestrian: they go down, the police notice, the screen shakes.
   const hitPed = pedestrians.hitPedestrian(player, car, state.inCar);
   if (hitPed) {
@@ -456,6 +577,7 @@ function stepWorld(dt, input, actions) {
     player.heading = SPAWN.player.heading;
     cameraView.yaw = player.heading;
     combat.clearEnemies();
+    activities.endActivity();
     story.say(busted ? BARKS.busted : BARKS.wasted);
     announce(busted ? 'Busted! The SBPD took $100. Back at the garage.' : 'Wasted! The SBPD took $100. Back at the garage.');
   }
@@ -472,6 +594,7 @@ function updateHud() {
     armor: Math.round(state.armor),
     wanted: state.wanted,
     objective: state.objective,
+    activityLine: activities.statusLine() || `☀ Sun postcards ${collectibles.foundCount}/20`,
     missionName: missionLabel || (missions.status === 'all-done' ? 'High Tide — complete' : missions.missionName),
     timer: missions.timer,
     speedKmh: Math.round(Math.abs(car.speed) * 3.6),
@@ -481,14 +604,21 @@ function updateHud() {
     ammo: combat.hasPistol ? `${combat.ammoInMag} / ${combat.ammoReserve}` : '',
     dialogue: line && speaker ? { speakerName: speaker.name, speakerColor: speaker.color, text: line.text } : null,
     fps: renderer.getFps(),
-  }, { player, car, traffic, fleet, police, missions, combat });
+  }, { player, car, traffic, fleet, police, missions, combat, activities, collectibles, garage });
 }
 
 function hudPrompt() {
-  if (state.inCar) return '';
+  if (state.inCar) {
+    if (garage.isInGarage(car.x, car.z)) return 'Get out here to keep this car & save';
+    if (car.specKey === 'taxi' && !activities.active) return 'Taxi — pick up the passenger on Palm Row';
+    return '';
+  }
   if (nearCar()) return `E — Get in the ${car.spec.name}`;
+  const stored = garage.nearestStored(player.x, player.z);
+  if (stored) return `E — Take the ${VEHICLES[stored.specKey].name} out of the garage`;
   const parked = fleet.nearestParked(player.x, player.z);
   if (parked) return `E — Steal the ${parked.spec.name}`;
+  if (Math.hypot(player.x - ACTIVITIES.courierStart.x, player.z - ACTIVITIES.courierStart.z) < 10 && !activities.active) return 'Courier parcels here — walk to them to start a run';
   if (combat.hasPistol) return 'Click — fire   R — reload';
   return '';
 }
@@ -575,6 +705,10 @@ const gameApi = {
       player.heading = car.heading;
     }
   },
+  /** Place traffic cars for a staged shot (chase, activities). */
+  placeTraffic(placements) {
+    traffic.placeForShot(placements);
+  },
   setCamera(view) {
     Object.assign(cameraView, view);
     if (view.mode === 'follow') {
@@ -618,8 +752,7 @@ const gameApi = {
   setMissionName(name) {
     missionLabel = name;
   },
-  /** Stage the Harbor Lights shootout for ?shot=mission (no stepping). */
-  stageMissionScene() {
+  /** Stage the Harbor Lights shootout for ?shot=mission (no stepping). */  stageMissionScene() {
     missions.start(3);
     // Jump straight to the shootout step: the reach step is already "done".
     missions.stepIndex = 1;
@@ -638,6 +771,16 @@ const gameApi = {
     // A muzzle flash beside the nearest gunman, so the shootout reads at once.
     effects.burst(-184, 1.4, -176, 6, 0xffe14f);
     story.sayOne('rosa', 'Kaine\u2019s men are on the dock. Clear them out, Lena.');
+  },
+  /** Stage a taxi fare mid-drop-off for ?shot=activities (no stepping). */
+  stageActivities() {
+    missionLabel = 'Side Activities';
+    activities.stageTaxiScene();
+    state.health = 100;
+    state.armor = 0;
+    state.money = 1250;
+    state.objective = 'Taxi fare — drop off at Palm Row';
+    story.sayOne('lena', 'A fare! Palm Row, coming right up.');
   },
 };
 

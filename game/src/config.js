@@ -245,4 +245,83 @@ export const MISSIONS = [
   { name: 'High Tide', objective: 'Escape across the causeway at 4 stars' },
 ];
 
+/** Side activities (Step 5): taxi fares, courier runs, street races. */
+export const ACTIVITIES = {
+  /** A taxi fare pays a base fee plus a tip for a fast drop-off. */
+  taxiBaseFare: 45,
+  taxiMaxTip: 25,
+  taxiTimeLimit: 75,
+  /** The passenger waits on the Palm Row boulevard, outside the hotels. */
+  taxiPassenger: { x: 180, z: 246 },
+  taxiDestinations: [
+    { x: -36, z: 252, name: 'Palm Row' },
+    { x: 36, z: 36, name: 'Neon Mile' },
+    { x: -180, z: -180, name: 'Old Harbor' },
+  ],
+  /** A courier run pays per parcel, plus a bonus for finishing on time. */
+  courierPayPerDrop: 30,
+  courierBonus: 40,
+  courierTimeLimit: 150,
+  courierStart: { x: -176, z: -128 },
+  courierDrops: [
+    { x: 36, z: 252, name: 'Palm Row boulevard' },
+    { x: 36, z: 36, name: 'Neon Mile' },
+    { x: -180, z: -180, name: 'Old Harbor docks' },
+  ],
+  /** A street race pays for beating the par time, more for beating the rivals. */
+  raceParSeconds: 75,
+  raceTimeLimit: 180,
+  raceWinPay: 200,
+  raceFinishPay: 50,
+  raceRivalBonus: 100,
+  raceStart: { x: -40, z: 252 },
+  raceCheckpoints: [
+    { x: 36, z: 252 },
+    { x: 108, z: 252 },
+    { x: 180, z: 252 },
+    { x: 252, z: 252 },
+    { x: 252, z: 180 },
+  ],
+};
+
+/** The garage at Rosa's place in Old Harbor: park here to keep a car and save. */
+export const GARAGE = {
+  zone: { minX: -196, maxX: -164, minZ: -140, maxZ: -108 },
+  centre: { x: -180, z: -124 },
+  maxSlots: 3,
+  slots: [
+    { x: -190, z: -116, heading: 0 },
+    { x: -180, z: -116, heading: 0 },
+    { x: -170, z: -116, heading: 0 },
+  ],
+};
+
+/** Twenty hidden sun postcards, one per spot; find them all for a $500 reward. */
+export const POSTCARDS = {
+  count: 20,
+  reward: 500,
+  spots: [
+    { x: -16, z: 246 },
+    { x: 216, z: 246 },
+    { x: -246, z: 108 },
+    { x: 246, z: -36 },
+    { x: -108, z: -246 },
+    { x: 108, z: -246 },
+    { x: -36, z: 36 },
+    { x: 36, z: -108 },
+    { x: -180, z: -36 },
+    { x: 180, z: 180 },
+    { x: -252, z: -180 },
+    { x: 252, z: 108 },
+    { x: 0, z: 252 },
+    { x: -72, z: 180 },
+    { x: 72, z: -180 },
+    { x: -216, z: -108 },
+    { x: 216, z: -108 },
+    { x: 330, z: 0 },
+    { x: 420, z: 40 },
+    { x: -144, z: 252 },
+  ],
+};
+
 export const FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif';

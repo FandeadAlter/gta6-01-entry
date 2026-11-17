@@ -154,6 +154,11 @@ export function createRenderer(canvas, random) {
   let fps = 0;
   let lastFpsNow = performance.now();
   const cameraState = { x: 0, y: 40, z: 60 };
+  // Smoothed camera values: the distance and pitch glide toward what the
+  // game asks for, so getting in or out of a car (or the mouse looking
+  // around) never snaps the frame — the camera settles behind the car.
+  let smoothDistance = CAMERA.footDistance;
+  let smoothPitch = 0.22;
   const lookTarget = new THREE.Vector3();
 
   function resize() {
@@ -213,9 +218,21 @@ export function createRenderer(canvas, random) {
       camera.position.set(view.camera.fixed.x, view.camera.fixed.y, view.camera.fixed.z);
       lookTarget.set(view.camera.target.x, view.camera.target.y, view.camera.target.z);
       camera.lookAt(lookTarget);
+      // A fixed shot (title orbit, city vista) resets the smoothing, so the
+      // next follow shot does not glide in from the old distance.
+      smoothDistance = view.camera.distance || CAMERA.footDistance;
+      smoothPitch = view.camera.pitch || 0.22;
     } else {
-      const distance = view.camera.distance;
-      const pitch = view.camera.pitch;
+      // Glide the distance and pitch: entering a car pulls the camera back
+      // smoothly, and at speed it eases a little further out.
+      const speedPull = view.inCar ? Math.min(Math.abs(view.car.speed) * 0.05, 1.5) : 0;
+      const targetDistance = view.camera.distance + speedPull;
+      const distSharp = 1 - Math.exp(-4 * dt);
+      smoothDistance += (targetDistance - smoothDistance) * distSharp;
+      const pitchSharp = 1 - Math.exp(-6 * dt);
+      smoothPitch += (view.camera.pitch - smoothPitch) * pitchSharp;
+      const distance = smoothDistance;
+      const pitch = smoothPitch;
       const yaw = view.camera.yaw;
       const target = view.inCar ? car : player;
       const targetY = view.inCar ? 1.6 : 1.5;
