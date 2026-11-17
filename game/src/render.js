@@ -134,7 +134,7 @@ export function createRenderer(canvas, random) {
   const city = buildCity(scene, random);
   const playerMesh = makePlayerMesh();
   scene.add(playerMesh);
-  const carMesh = makeCarMesh(VEHICLES.alba);
+  let carMesh = makeCarMesh(VEHICLES.alba);
   scene.add(carMesh);
   const parkedMeshes = [];
   for (const [spec, x, z, heading] of [
@@ -233,6 +233,10 @@ export function createRenderer(canvas, random) {
     sky.position.set(camera.position.x, 0, camera.position.z);
     sunDisc.position.copy(SUN_DIRECTION).multiplyScalar(1050).add(camera.position);
     sunDisc.lookAt(camera.position);
+    if (view.shake) {
+      camera.position.x += view.shake.x;
+      camera.position.y += view.shake.y;
+    }
 
     renderer.render(scene, camera);
   }
@@ -243,6 +247,13 @@ export function createRenderer(canvas, random) {
   return {
     draw,
     city,
+    scene,
+    /** Swap the player car's mesh when Lena steals a different model. */
+    swapPlayerCar(spec) {
+      scene.remove(carMesh);
+      carMesh = makeCarMesh(spec);
+      scene.add(carMesh);
+    },
     getFps() {
       return fps;
     },

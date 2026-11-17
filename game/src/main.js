@@ -1,17 +1,22 @@
 // Boot and the one loop: input is read every frame, the world advances in fixed
 // 1/60 s steps (several in a slow frame, none in a fast one), and the renderer
 // paints what is there. The game moves between three screens: title, play and
-// paused. Step 2: on foot and by car in an empty Solmar Bay — no missions,
-// police, traffic, pedestrians or combat yet.
+// paused. Step 3: core systems — stealable vehicles, traffic, pedestrians,
+// police with a five-star wanted level, and effects — wired into the loop.
 //
-// ?seed=N fixes the city layout. ?shot=drive|street|city (with &seed=N) stages
-// that scene instead of running the loop, paints it twice and sets
+// ?seed=N fixes the city layout. ?shot=drive|street|city|chase (with &seed=N)
+// stages that scene instead of running the loop, paints it twice and sets
 // window.__shotReady for a screenshot.
-import { CAMERA, CLOCK, MISSIONS, PLAYER, SAVE_KEY, SPAWN, STEP, VEHICLES } from './config.js';
+import { CAMERA, CLOCK, MISSIONS, PLAYER, POLICE, SAVE_KEY, SPAWN, STEP, VEHICLES } from './config.js';
 import { createRandom } from './random.js';
 import { ACTION_CONFIRM, ACTION_ENTER, ACTION_JUMP, ACTION_PAUSE, createInput } from './input.js';
 import { createRenderer, SCREEN_PAUSED, SCREEN_PLAY, SCREEN_TITLE } from './render.js';
 import { stageShot } from './shots.js';
+import { VehicleFleet, createVehicle, isSmoking, stepVehicle } from './vehicles.js';
+import { TrafficManager } from './traffic.js';
+import { PedestrianManager } from './pedestrians.js';
+import { OUTCOME_BUSTED, OUTCOME_WASTED, PoliceManager } from './police.js';
+import { EffectsManager } from './effects.js';
 
 /** The longest frame the loop catches up on; a longer stall (a hidden tab) is dropped, not replayed. */
 const MAX_FRAME = 0.25;
@@ -25,7 +30,11 @@ const canvas = document.getElementById('game');
 const status = document.getElementById('status');
 const renderer = createRenderer(canvas, createRandom(seed));
 const city = renderer.city;
-const carSpec = VEHICLES.alba;
+const fleet = new VehicleFleet(renderer.scene, createRandom(seed + 1));
+const traffic = new TrafficManager(renderer.scene, createRandom(seed + 2));
+const pedestrians = new PedestrianManager(renderer.scene, createRandom(seed + 3));
+const police = new PoliceManager(renderer.scene, createRandom(seed + 4));
+const effects = new EffectsManager(renderer.scene);
 
 const player = {
   x: SPAWN.player.x,
@@ -39,13 +48,9 @@ const player = {
   moving: false,
   onGround: true,
 };
-const car = {
-  x: SPAWN.car.x,
-  z: SPAWN.car.z,
-  heading: SPAWN.car.heading,
-  speed: 0,
-  steer: 0,
-};
+// The player's current car: a full vehicle state, drawn by render.js.
+const car = createVehicle('alba', SPAWN.car.x, SPAWN.car.z, SPAWN.car.heading);
+car.parked = false;
 const cameraView = { mode: 'follow', yaw: SPAWN.player.heading, pitch: 0.22, distance: CAMERA.footDistance };
 const state = {
   screen: SCREEN_TITLE,
@@ -55,7 +60,10 @@ const state = {
   wanted: 0,
   objective: MISSIONS[0].objective,
   titleOrbit: 0,
+  outcome: '',
 };
+let recklessTimer = 0;
+let smokeTimer = 0;
 
 function readSave() {
   try {
@@ -71,7 +79,7 @@ function writeSave() {
     window.localStorage.setItem(SAVE_KEY, JSON.stringify({
       money: state.money,
       player: { x: player.x, z: player.z, heading: player.heading },
-      car: { x: car.x, z: car.z, heading: car.heading },
+      car: { x: car.x, z: car.z, heading: car.heading, specKey: car.specKey, damage: car.damage },
       inCar: state.inCar,
     }));
   } catch {
@@ -91,6 +99,12 @@ function applySave(save) {
     car.x = save.car.x;
     car.z = save.car.z;
     car.heading = save.car.heading;
+    car.damage = save.car.damage || 0;
+    if (save.car.specKey && VEHICLES[save.car.specKey] && save.car.specKey !== car.specKey) {
+      car.specKey = save.car.specKey;
+      car.spec = VEHICLES[save.car.specKey];
+      renderer.swapPlayerCar(car.spec);
+    }
   }
   state.inCar = Boolean(save.inCar);
   cameraView.yaw = player.heading;
@@ -156,34 +170,42 @@ function stepOnFoot(dt, input, actions) {
 function stepCar(dt, input) {
   const pedal = input.drivePedal();
   const steerInput = input.driveSteer();
-  const steerMax = carSpec.steerMax / (1 + Math.abs(car.speed) * 0.12);
-  const steerTarget = steerInput * steerMax;
-  car.steer += (steerTarget - car.steer) * Math.min(1, dt * 8);
-
-  if (pedal > 0) {
-    car.speed += (car.speed < 0 ? carSpec.brake : carSpec.accel) * dt;
-  } else if (pedal < 0) {
-    car.speed -= (car.speed > 0 ? carSpec.brake : carSpec.accel * 0.6) * dt;
-  } else {
-    car.speed -= car.speed * Math.min(1, dt * 1.4);
-    if (Math.abs(car.speed) < 0.2) car.speed = 0;
+  const hitWall = stepVehicle(car, pedal, steerInput, dt, city);
+  if (hitWall) {
+    effects.burst(car.x, 1, car.z, 10, 0xffd9a0);
+    effects.shake(0.35);
   }
-  car.speed = Math.max(-carSpec.maxReverse, Math.min(carSpec.maxSpeed, car.speed));
-
-  car.heading += (car.speed / 2.8) * Math.tan(car.steer) * dt;
-
-  const prevX = car.x;
-  const prevZ = car.z;
-  car.x += Math.sin(car.heading) * car.speed * dt;
-  car.z += Math.cos(car.heading) * car.speed * dt;
-  const beforeX = car.x;
-  const beforeZ = car.z;
-  city.collideCircle(car, carSpec.radius);
-  if (car.x !== beforeX || car.z !== beforeZ) car.speed *= 0.55;
-  if (!city.onLand(car.x, car.z)) {
-    car.x = prevX;
-    car.z = prevZ;
-    car.speed *= 0.3;
+  // Skid marks when braking hard or steering hard at speed.
+  if (Math.abs(car.speed) > 15 && (pedal < 0 || Math.abs(car.steer) > 0.4)) {
+    const rearX = car.x - Math.sin(car.heading) * car.spec.length * 0.4;
+    const rearZ = car.z - Math.cos(car.heading) * car.spec.length * 0.4;
+    effects.skid(rearX, rearZ, car.heading);
+  }
+  // A damaged engine smokes.
+  if (isSmoking(car)) {
+    smokeTimer -= dt;
+    if (smokeTimer <= 0) {
+      smokeTimer = 0.35;
+      const frontX = car.x + Math.sin(car.heading) * car.spec.length * 0.4;
+      const frontZ = car.z + Math.cos(car.heading) * car.spec.length * 0.4;
+      effects.puff(frontX, 1.2, frontZ);
+    }
+  }
+  // Reckless driving (flat out through the city) raises heat, throttled.
+  recklessTimer -= dt;
+  if (Math.abs(car.speed) > 30 && recklessTimer <= 0) {
+    recklessTimer = 3;
+    police.onReckless();
+  }
+  // Bumping a traffic car: slow down, spark, shake.
+  for (const pos of traffic.positions()) {
+    if (Math.hypot(pos.x - car.x, pos.z - car.z) < 3.2 && Math.abs(car.speed) > 3) {
+      car.speed *= 0.5;
+      car.damage = Math.min(1, car.damage + 0.06);
+      effects.burst(car.x, 1, car.z, 8, 0xffe14f);
+      effects.shake(0.3);
+      break;
+    }
   }
 
   // The chase camera settles behind the car; the mouse can look around freely.
@@ -214,6 +236,28 @@ function stepWorld(dt, input, actions) {
       player.x = car.x;
       player.z = car.z;
       cameraView.distance = CAMERA.carDistance;
+    } else {
+      // Steal a parked car: it becomes the car Lena drives, and the police notice.
+      const parked = fleet.nearestParked(player.x, player.z);
+      if (parked) {
+        fleet.steal(parked);
+        car.specKey = parked.specKey;
+        car.spec = parked.spec;
+        car.x = parked.x;
+        car.z = parked.z;
+        car.heading = parked.heading;
+        car.speed = 0;
+        car.steer = 0;
+        car.damage = parked.damage;
+        renderer.swapPlayerCar(car.spec);
+        state.inCar = true;
+        player.x = car.x;
+        player.z = car.z;
+        player.heading = car.heading;
+        cameraView.distance = CAMERA.carDistance;
+        police.onCarTheft();
+        announce(`Stole the ${car.spec.name}. The SBPD noticed.`);
+      }
     }
   }
 
@@ -235,6 +279,46 @@ function stepWorld(dt, input, actions) {
     player.x = car.x;
     player.z = car.z;
     player.heading = car.heading;
+  }
+
+  // Core systems advance on the same fixed step.
+  traffic.update(dt, { playerCar: car, inCar: state.inCar, playerOnFoot: state.inCar ? null : player });
+  pedestrians.update(dt, {
+    player,
+    playerCar: car,
+    inCar: state.inCar,
+    wanted: police.wanted,
+    gunfire: false,
+  });
+  police.update(dt, { player, playerCar: car, inCar: state.inCar, health: state.health });
+  effects.update(dt);
+  state.wanted = police.wanted;
+
+  // Hitting a pedestrian: they go down, the police notice, the screen shakes.
+  const hitPed = pedestrians.hitPedestrian(player, car, state.inCar);
+  if (hitPed) {
+    pedestrians.knockDown(hitPed);
+    police.onHitPedestrian();
+    effects.burst(hitPed.mesh.position.x, 1, hitPed.mesh.position.z, 8, 0xd92a2a);
+    effects.shake(0.4);
+    state.wanted = police.wanted;
+  }
+
+  // Busted / Wasted: lose some money, lose the heat, wake up at the garage.
+  if (police.outcome === OUTCOME_BUSTED || police.outcome === OUTCOME_WASTED) {
+    const busted = police.outcome === OUTCOME_BUSTED;
+    state.outcome = busted ? 'Busted' : 'Wasted';
+    state.money = Math.max(0, state.money - 100);
+    state.health = 100;
+    police.clearWanted();
+    state.wanted = 0;
+    state.inCar = false;
+    car.speed = 0;
+    player.x = SPAWN.player.x;
+    player.z = SPAWN.player.z;
+    player.heading = SPAWN.player.heading;
+    cameraView.yaw = player.heading;
+    announce(busted ? 'Busted! The SBPD took $100. Back at the garage.' : 'Wasted! The SBPD took $100. Back at the garage.');
   }
 }
 
@@ -285,6 +369,39 @@ function drawMinimap() {
     ctx.lineTo(x2, y2);
     ctx.stroke();
   }
+  // Traffic cars as small grey dots, parked stealable cars as gold dots.
+  ctx.fillStyle = '#c8c8c8';
+  for (const pos of traffic.positions()) {
+    const [tx, ty] = toMap(pos.x, pos.z);
+    ctx.fillRect(tx - 1, ty - 1, 2, 2);
+  }
+  ctx.fillStyle = '#f2c94c';
+  for (const parked of fleet.parked) {
+    if (parked.stolen) continue;
+    const [tx, ty] = toMap(parked.x, parked.z);
+    ctx.fillRect(tx - 1, ty - 1, 3, 3);
+  }
+  // Police blips: cruisers red, officers blue, helicopter yellow.
+  const blips = police.blips();
+  ctx.fillStyle = '#d92a2a';
+  for (const cruiser of blips.cruisers) {
+    const [bx, by] = toMap(cruiser.x, cruiser.z);
+    ctx.beginPath();
+    ctx.arc(bx, by, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.fillStyle = '#2a6aff';
+  for (const officer of blips.officers) {
+    const [bx, by] = toMap(officer.x, officer.z);
+    ctx.fillRect(bx - 2, by - 2, 4, 4);
+  }
+  if (blips.helicopter) {
+    ctx.fillStyle = '#ffe14f';
+    const [hx, hy] = toMap(blips.helicopter.x, blips.helicopter.z);
+    ctx.beginPath();
+    ctx.arc(hx, hy, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
   // The player's car, then the player arrow on top.
   const [carX, carY] = toMap(car.x, car.z);
   ctx.fillStyle = '#f2c94c';
@@ -330,7 +447,14 @@ function updateHud() {
     hud.speed.textContent = state.inCar ? String(speedKmh) : '';
     hud.speedUnit.style.visibility = state.inCar ? 'visible' : 'hidden';
   }
-  const prompt = !state.inCar && nearCar() ? 'E — Get in the Alba' : '';
+  let prompt = '';
+  if (!state.inCar) {
+    if (nearCar()) prompt = `E — Get in the ${car.spec.name}`;
+    else {
+      const parked = fleet.nearestParked(player.x, player.z);
+      if (parked) prompt = `E — Steal the ${parked.spec.name}`;
+    }
+  }
   if (prompt !== lastHud.prompt) {
     lastHud.prompt = prompt;
     hud.prompt.textContent = prompt;
@@ -405,7 +529,12 @@ const gameApi = {
     player.vx = 0;
     player.vz = 0;
   },
-  placeCar(x, z, heading) {
+  placeCar(x, z, heading, specKey) {
+    if (specKey && VEHICLES[specKey] && specKey !== car.specKey) {
+      car.specKey = specKey;
+      car.spec = VEHICLES[specKey];
+      renderer.swapPlayerCar(car.spec);
+    }
     car.x = x;
     car.z = z;
     car.heading = heading;
@@ -433,6 +562,22 @@ const gameApi = {
   setObjective(text) {
     state.objective = text;
   },
+  setWanted(stars) {
+    police.setWanted(stars);
+    state.wanted = police.wanted;
+  },
+  stageChase() {
+    traffic.placeForShot([
+      { axis: 'x', road: 252, along: 10, direction: 1 },
+      { axis: 'x', road: 252, along: 55, direction: 1 },
+      { axis: 'x', road: 252, along: -70, direction: -1 },
+      { axis: 'x', road: 252, along: 90, direction: 1 },
+    ]);
+    police.stageChase(car.x, car.z, car.heading);
+    // A little smoke from the chase and skid marks under the Vela GT.
+    effects.puff(car.x, 1.2, car.z);
+    effects.skid(car.x - Math.sin(car.heading) * 2, car.z - Math.cos(car.heading) * 2, car.heading);
+  },
 };
 
 function runShot(name) {
@@ -442,7 +587,7 @@ function runShot(name) {
   function paint() {
     // Keep painting after the shot is ready, so the fps counter stays live.
     requestAnimationFrame(paint);
-    renderer.draw({ player, car, inCar: state.inCar, camera: cameraView }, STEP);
+    renderer.draw({ player, car, inCar: state.inCar, camera: cameraView, shake: effects.shakeOffset() }, STEP);
     updateHud();
     painted += 1;
     if (painted === 2) {
@@ -500,7 +645,7 @@ function runGame() {
     } else {
       accumulator = 0;
     }
-    renderer.draw({ player, car, inCar: state.inCar, camera: cameraView }, STEP);
+    renderer.draw({ player, car, inCar: state.inCar, camera: cameraView, shake: effects.shakeOffset() }, STEP);
     if (state.screen === SCREEN_PLAY) updateHud();
     window.__fps = renderer.getFps();
   }

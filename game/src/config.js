@@ -84,6 +84,98 @@ export const VEHICLES = {
     radius: 1.7,
     length: 4.8,
   },
+  mule: {
+    name: 'Mule',
+    kind: 'van',
+    color: 0x8a8a92,
+    accel: 10,
+    brake: 28,
+    maxSpeed: 30,
+    maxReverse: 8,
+    steerMax: 0.45,
+    radius: 1.8,
+    length: 5.2,
+  },
+  wasp: {
+    name: 'Wasp 250',
+    kind: 'bike',
+    color: 0xd92a6a,
+    accel: 22,
+    brake: 36,
+    maxSpeed: 52,
+    maxReverse: 6,
+    steerMax: 0.62,
+    radius: 1.0,
+    length: 2.2,
+  },
+  taxi: {
+    name: 'Harbor Taxi',
+    kind: 'taxi',
+    color: 0xf2c94c,
+    accel: 13,
+    brake: 31,
+    maxSpeed: 36,
+    maxReverse: 9,
+    steerMax: 0.55,
+    radius: 1.6,
+    length: 4.4,
+  },
+  interceptor: {
+    name: 'SBPD Interceptor',
+    kind: 'police',
+    color: 0x1a2a4a,
+    accel: 20,
+    brake: 36,
+    maxSpeed: 50,
+    maxReverse: 10,
+    steerMax: 0.52,
+    radius: 1.6,
+    length: 4.4,
+  },
+};
+
+/** Traffic: how many cars, how fast, how they brake and honk. */
+export const TRAFFIC = {
+  count: 14,
+  minSpeed: 8,
+  maxSpeed: 14,
+  brakeDistance: 11,
+  honkDistance: 7,
+  lightCycle: 9,
+};
+
+/** Pedestrians: crowd size, walking speeds, flee radius. */
+export const PEDS = {
+  count: 24,
+  minSpeed: 1.1,
+  maxSpeed: 2.0,
+  fleeSpeed: 5.2,
+  fleeRadius: 10,
+  crossChance: 0.22,
+};
+
+/** Wanted level: heat points per offence, decay, and the response per star. */
+export const POLICE = {
+  heatTheft: 35,
+  heatReckless: 12,
+  heatHitPed: 45,
+  heatPerStar: 40,
+  decayPerSecond: 3.5,
+  maxCruisers: [0, 0, 2, 3, 4, 5],
+  maxOfficers: [0, 2, 2, 3, 4, 5],
+  roadblockAt: 3,
+  helicopterAt: 4,
+  spikeAt: 4,
+  bustedDistance: 1.6,
+  bustedTime: 2.0,
+  searchRadius: 90,
+};
+
+/** Effects: pool sizes for particles, smoke puffs and skid marks. */
+export const EFFECTS = {
+  particles: 48,
+  smokePuffs: 20,
+  skidMarks: 48,
 };
 
 export const SPAWN = {

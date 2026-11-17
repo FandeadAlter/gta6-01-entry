@@ -1,11 +1,12 @@
-// The screenshot scenes behind ?shot=drive|street|city. Each one places the real
-// player and car in the real city and lets the renderer paint it, so the frame is
-// what the game really looks like and the same seed always gives the same frame.
+// The screenshot scenes behind ?shot=drive|street|city|chase. Each one places the
+// real player and car in the real city and lets the renderer paint it, so the
+// frame is what the game really looks like and the same seed always gives the
+// same frame.
 import { MISSIONS } from './config.js';
 
 /**
- * Set `game` to the named scene (drive, street or city; any other name is drive)
- * and return the objective line to show.
+ * Set `game` to the named scene (drive, street, city or chase; any other name
+ * is drive) and return the objective line to show.
  */
 export function stageShot(name, game) {
   if (name === 'street') {
@@ -26,6 +27,18 @@ export function stageShot(name, game) {
       target: { x: 20, y: 5, z: -20 },
     });
     game.setObjective('Explore Solmar Bay');
+    return;
+  }
+  if (name === 'chase') {
+    // Cover shot: Lena in the stolen Vela GT at 3 stars on Palm Row, two SBPD
+    // Interceptors behind, a roadblock ahead, traffic in the next lane.
+    game.placeCar(0, 246, Math.PI / 2, 'vela');
+    game.placePlayer(0, 242, Math.PI / 2);
+    game.setInCar(true);
+    game.setWanted(3);
+    game.stageChase();
+    game.setCamera({ mode: 'follow', yaw: Math.PI / 2, pitch: 0.22, distance: 10 });
+    game.setObjective('Lose the cops — reach the garage');
     return;
   }
   // drive: Lena in the Alba on the Palm Row boulevard, sea on the right.
