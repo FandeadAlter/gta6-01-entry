@@ -22,6 +22,14 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1410; fon
 #speed { font-size: 34px; font-weight: 800; }
 #speed-unit { font-size: 15px; font-weight: 600; }
 #prompt { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%); font-size: 17px; font-weight: 600; background: rgba(0, 0, 0, 0.55); padding: 8px 16px; border-radius: 6px; }
+#armor-fill { height: 100%; width: 0; background: #5aa8e8; }
+#mission-name { font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #f2c94c; text-align: center; margin-bottom: 4px; }
+#mission-timer { display: inline-block; margin-top: 6px; font-size: 20px; font-weight: 800; color: #ffe14f; background: rgba(0, 0, 0, 0.45); padding: 4px 12px; border-radius: 6px; }
+#weapon-line { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+#ammo { color: #ffe14f; margin-left: 8px; }
+#crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 26px; font-weight: 700; color: rgba(245, 239, 228, 0.9); text-shadow: 0 0 4px rgba(0, 0, 0, 0.9); }
+#dialogue { position: absolute; left: 50%; bottom: 170px; transform: translateX(-50%); max-width: 640px; font-size: 16px; line-height: 1.4; background: rgba(0, 0, 0, 0.6); border-left: 4px solid #f2c94c; padding: 10px 16px; border-radius: 6px; }
+#dialogue-speaker { font-weight: 800; margin-right: 8px; }
 
 #title-screen, #pause-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 6, 0.45); }
 #pause-screen { background: rgba(20, 12, 6, 0.6); }

@@ -29,6 +29,19 @@ export function stageShot(name, game) {
     game.setObjective('Explore Solmar Bay');
     return;
   }
+  if (name === 'mission') {
+    // Mission 4, "Harbor Lights": a shootout at the Old Harbor dock — Lena
+    // on foot with the pistol, three of Kaine's men ahead, health and armor
+    // on the HUD, the objective and Rosa's line in the frame.
+    // Lena on the road south of the intersection, facing north straight at
+    // the gunmen on the open intersection — no building between camera and fight.
+    game.placePlayer(-180, -192, 0);
+    game.placeCar(-180, -124, Math.PI);
+    game.setInCar(false);
+    game.stageMissionScene();
+    game.setCamera({ mode: 'follow', yaw: 0, pitch: 0.22, distance: 6.5 });
+    return;
+  }
   if (name === 'chase') {
     // Cover shot: Lena in the stolen Vela GT at 3 stars on Palm Row, two SBPD
     // Interceptors behind, a roadblock ahead, traffic in the next lane.

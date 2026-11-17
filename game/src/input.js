@@ -8,6 +8,8 @@ export const ACTION_CONFIRM = 1;
 export const ACTION_PAUSE = 2;
 export const ACTION_JUMP = 4;
 export const ACTION_ENTER = 8;
+export const ACTION_FIRE = 16;
+export const ACTION_RELOAD = 32;
 
 const FORWARD = new Set(['KeyW', 'ArrowUp']);
 const BACK = new Set(['KeyS', 'ArrowDown']);
@@ -18,10 +20,13 @@ const CONFIRM = new Set(['Space', 'Enter']);
 const PAUSE = new Set(['KeyP', 'Escape']);
 const ENTER = new Set(['KeyE']);
 const JUMP_KEY = new Set(['Space']);
+const FIRE_KEY = new Set(['KeyF']);
+const RELOAD_KEY = new Set(['KeyR']);
 
 /** Keys the game uses, so the page never scrolls under them. */
 const GAME_KEYS = new Set([
   ...FORWARD, ...BACK, ...LEFT, ...RIGHT, ...SPRINT, ...CONFIRM, ...PAUSE, ...ENTER,
+  ...FIRE_KEY, ...RELOAD_KEY,
 ]);
 
 export function createInput(target) {
@@ -30,6 +35,7 @@ export function createInput(target) {
   let mouseDX = 0;
   let mouseDY = 0;
   let dragging = false;
+  let mouseHeld = false;
   let lastX = 0;
   let lastY = 0;
 
@@ -41,6 +47,7 @@ export function createInput(target) {
       if (PAUSE.has(event.code)) actions |= ACTION_PAUSE;
       if (ENTER.has(event.code)) actions |= ACTION_ENTER;
       if (JUMP_KEY.has(event.code)) actions |= ACTION_JUMP;
+      if (RELOAD_KEY.has(event.code)) actions |= ACTION_RELOAD;
     }
     held.add(event.code);
   });
@@ -60,6 +67,10 @@ export function createInput(target) {
 
   target.addEventListener('pointerdown', (event) => {
     dragging = true;
+    if (event.button === 0) {
+      mouseHeld = true;
+      actions |= ACTION_FIRE;
+    }
     lastX = event.clientX;
     lastY = event.clientY;
     // Pointer lock on click gives free mouse-look; a failed request is harmless.
@@ -73,6 +84,7 @@ export function createInput(target) {
   });
   window.addEventListener('pointerup', () => {
     dragging = false;
+    mouseHeld = false;
   });
   window.addEventListener('pointermove', (event) => {
     if (document.pointerLockElement === target) {
@@ -97,6 +109,10 @@ export function createInput(target) {
     /** True while either Shift is held. */
     sprinting() {
       return hasAny(SPRINT);
+    },
+    /** True while the mouse button or F is held: hold to keep firing. */
+    firing() {
+      return mouseHeld || hasAny(FIRE_KEY);
     },
     /** W/S for the car: 1 accelerate, -1 brake/reverse, 0 neither. */
     drivePedal() {

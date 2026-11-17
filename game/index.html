@@ -18,9 +18,12 @@
     <div id="stars" aria-label="Wanted level">☆☆☆☆☆</div>
     <div id="money">$0</div>
     <div class="bar"><div id="health-fill"></div></div>
+    <div class="bar" id="armor-bar" style="visibility:hidden"><div id="armor-fill"></div></div>
   </div>
   <div id="hud-top-center">
+    <div id="mission-name">Homecoming</div>
     <div id="objective">Drive Rosa&rsquo;s Alba to Old Harbor</div>
+    <div id="mission-timer" style="visibility:hidden"></div>
   </div>
   <div id="hud-top-right">
     <div id="clock">17:42</div>
@@ -31,8 +34,11 @@
     <div id="district-label">Old Harbor</div>
   </div>
   <div id="hud-bottom-right">
+    <div id="weapon-line"><span id="weapon">Fists</span> <span id="ammo" style="visibility:hidden"></span></div>
     <div id="speed"><span id="speed-value"></span> <span id="speed-unit">km/h</span></div>
   </div>
+  <div id="crosshair" style="visibility:hidden">+</div>
+  <div id="dialogue" style="visibility:hidden"><span id="dialogue-speaker"></span><span id="dialogue-text"></span></div>
   <div id="prompt" style="visibility:hidden"></div>
 </div>
 
@@ -46,7 +52,8 @@
     <div id="how-panel">
       <p><b>W A S D</b> — walk / drive &nbsp; <b>Shift</b> — sprint</p>
       <p><b>Space</b> — jump &nbsp; <b>E</b> — get in / out of a car</p>
-      <p><b>Mouse drag</b> — look around &nbsp; <b>P</b> — pause</p>
+      <p><b>Click / F</b> — fire &nbsp; <b>R</b> — reload &nbsp; <b>P</b> — pause</p>
+      <p><b>Mouse drag</b> — look around &nbsp; <b>M</b> — mission briefing</p>
       <p>Steal a car, lose the cops, pay off Nico&rsquo;s debt.</p>
     </div>
     <p class="save-note">Lena Mar&iacute;n comes home to find her brother gone — and Victor Kaine holding the note.</p>
@@ -57,6 +64,7 @@
   <div class="panel">
     <h1>Paused</h1>
     <button id="btn-resume">Resume</button>
+    <button id="btn-restart-mission">Restart mission</button>
     <button id="btn-quit">Save &amp; quit to title</button>
   </div>
 </div>
