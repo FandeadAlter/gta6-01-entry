@@ -3,16 +3,64 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Block Dodger</title>
-<style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
-  #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  /* Read aloud, never shown: the status line screen readers announce. */
-  #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-</style>
+<title>Solmar Bay</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./style.css">
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.min.js" } }
+</script>
 </head>
 <body>
-<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
+<canvas id="game" aria-label="Solmar Bay: explore the city on foot and by car"></canvas>
+
+<div id="hud" style="visibility:hidden">
+  <div id="hud-top-left">
+    <div id="stars" aria-label="Wanted level">☆☆☆☆☆</div>
+    <div id="money">$0</div>
+    <div class="bar"><div id="health-fill"></div></div>
+  </div>
+  <div id="hud-top-center">
+    <div id="objective">Drive Rosa&rsquo;s Alba to Old Harbor</div>
+  </div>
+  <div id="hud-top-right">
+    <div id="clock">17:42</div>
+    <div id="fps">-- fps</div>
+  </div>
+  <div id="hud-bottom-left">
+    <canvas id="minimap" width="220" height="220"></canvas>
+    <div id="district-label">Old Harbor</div>
+  </div>
+  <div id="hud-bottom-right">
+    <div id="speed"><span id="speed-value"></span> <span id="speed-unit">km/h</span></div>
+  </div>
+  <div id="prompt" style="visibility:hidden"></div>
+</div>
+
+<div id="title-screen">
+  <div class="panel">
+    <h1>SOLMAR BAY</h1>
+    <p class="tagline">High tide. High stakes. One city, one debt, one way out.</p>
+    <button id="btn-new">New Game</button>
+    <button id="btn-continue">Continue</button>
+    <button id="btn-how">How to play</button>
+    <div id="how-panel">
+      <p><b>W A S D</b> — walk / drive &nbsp; <b>Shift</b> — sprint</p>
+      <p><b>Space</b> — jump &nbsp; <b>E</b> — get in / out of a car</p>
+      <p><b>Mouse drag</b> — look around &nbsp; <b>P</b> — pause</p>
+      <p>Steal a car, lose the cops, pay off Nico&rsquo;s debt.</p>
+    </div>
+    <p class="save-note">Lena Mar&iacute;n comes home to find her brother gone — and Victor Kaine holding the note.</p>
+  </div>
+</div>
+
+<div id="pause-screen" style="display:none">
+  <div class="panel">
+    <h1>Paused</h1>
+    <button id="btn-resume">Resume</button>
+    <button id="btn-quit">Save &amp; quit to title</button>
+  </div>
+</div>
+
 <p id="status" role="status" aria-live="polite"></p>
 <script type="module" src="./src/main.js"></script>
 </body>

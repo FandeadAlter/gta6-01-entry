@@ -1,0 +1,35 @@
+/* Solmar Bay HUD and menu styling. Warm golden-hour palette, translucent dark
+   panels so the city stays visible behind the interface. */
+html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1410; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+#hud { position: fixed; inset: 0; pointer-events: none; color: #f5efe4; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+#hud-top-left { position: absolute; top: 16px; left: 18px; }
+#stars { font-size: 26px; letter-spacing: 3px; color: #f2c94c; }
+#money { font-size: 22px; font-weight: 700; margin-top: 2px; }
+.bar { width: 170px; height: 9px; margin-top: 7px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(245, 239, 228, 0.5); border-radius: 5px; overflow: hidden; }
+#health-fill { height: 100%; width: 100%; background: #5ec96a; }
+#hud-top-center { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }
+#objective { font-size: 17px; font-weight: 600; background: rgba(0, 0, 0, 0.45); padding: 7px 16px; border-radius: 6px; }
+#hud-top-right { position: absolute; top: 16px; right: 18px; text-align: right; }
+#clock { font-size: 22px; font-weight: 700; }
+#fps { font-size: 13px; color: #c8bca8; margin-top: 2px; }
+#hud-bottom-left { position: absolute; left: 18px; bottom: 18px; }
+#minimap { display: block; border: 2px solid rgba(245, 239, 228, 0.65); border-radius: 50%; background: #2e7fa8; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5); }
+#district-label { margin-top: 6px; font-size: 15px; font-weight: 600; text-align: center; }
+#hud-bottom-right { position: absolute; right: 22px; bottom: 20px; text-align: right; }
+#speed { font-size: 34px; font-weight: 800; }
+#speed-unit { font-size: 15px; font-weight: 600; }
+#prompt { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%); font-size: 17px; font-weight: 600; background: rgba(0, 0, 0, 0.55); padding: 8px 16px; border-radius: 6px; }
+
+#title-screen, #pause-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(20, 12, 6, 0.45); }
+#pause-screen { background: rgba(20, 12, 6, 0.6); }
+.panel { text-align: center; background: rgba(16, 12, 8, 0.72); border: 1px solid rgba(242, 201, 76, 0.4); border-radius: 14px; padding: 34px 48px; max-width: 560px; color: #f5efe4; }
+.panel h1 { margin: 0 0 8px; font-size: 52px; letter-spacing: 6px; color: #f2c94c; text-shadow: 0 3px 18px rgba(242, 201, 76, 0.45); }
+.panel .tagline { margin: 0 0 22px; font-size: 17px; color: #e8dcc8; }
+.panel button { display: block; width: 260px; margin: 10px auto; padding: 12px; font-size: 17px; font-weight: 700; color: #1a1410; background: #f2c94c; border: none; border-radius: 8px; cursor: pointer; }
+.panel button:hover { background: #ffd95e; }
+#how-panel { display: none; margin-top: 14px; font-size: 15px; line-height: 1.5; color: #e8dcc8; }
+#how-panel p { margin: 4px 0; }
+.save-note { margin-top: 18px; font-size: 14px; color: #c8bca8; font-style: italic; }
