@@ -140,6 +140,20 @@ export class PedestrianManager {
     }
   }
 
+  /** Stage fixed pedestrians for a shot: each walks one sidewalk line. */
+  placeForShot(placements) {
+    placements.forEach((place, index) => {
+      const ped = this.peds[index % this.peds.length];
+      ped.axis = place.axis;
+      ped.road = place.road;
+      ped.side = place.side;
+      ped.along = place.along;
+      ped.direction = place.direction;
+      ped.fleeing = false;
+    });
+    this.syncMeshes();
+  }
+
   /** True when the player (on foot or in a car) is touching a pedestrian. */
   hitPedestrian(player, playerCar, inCar) {
     const px = inCar ? playerCar.x : player.x;

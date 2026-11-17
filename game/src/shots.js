@@ -10,11 +10,44 @@ import { MISSIONS } from './config.js';
  */
 export function stageShot(name, game) {
   if (name === 'street') {
-    game.placePlayer(30, 30, Math.PI);
-    game.placeCar(-180, -124, Math.PI);
+    // On foot on Neon Mile: Lena on road x=36, facing north up the street
+    // toward the towers' neon signs. Pedestrians crowd both sidewalks,
+    // traffic passes on the road, the Alba waits parked ahead — every
+    // passer-by and car is placed by hand, so the same seed always gives
+    // the same frame (shot mode never steps the world, so the random
+    // opening positions would leave the street empty). The camera is fixed
+    // low and far back, looking up the street: a follow camera looks down
+    // at Lena and the signs (hung at ~60% of each tower's height) sit
+    // above its frame, while this angle puts Lena, the street and the
+    // signs in one frame.
+    game.placePlayer(33, 68, Math.PI);
+    game.placeCar(39, 35, Math.PI);
     game.setInCar(false);
-    game.setCamera({ mode: 'follow', yaw: Math.PI, pitch: 0.22, distance: 6.5 });
-    game.setObjective(MISSIONS[0].objective);
+    game.placeTraffic([
+      { axis: 'z', road: 36, along: 15, direction: -1 },
+      { axis: 'z', road: 36, along: -5, direction: -1 },
+      { axis: 'z', road: 36, along: -25, direction: -1 },
+      { axis: 'z', road: 36, along: 25, direction: 1 },
+      { axis: 'z', road: 36, along: 50, direction: 1 },
+    ]);
+    game.placePedestrians([
+      { axis: 'z', road: 36, side: 8.5, along: 20, direction: 1 },
+      { axis: 'z', road: 36, side: -8.5, along: 30, direction: -1 },
+      { axis: 'z', road: 36, side: 8.5, along: 45, direction: -1 },
+      { axis: 'z', road: 36, side: -8.5, along: 55, direction: 1 },
+      { axis: 'z', road: 36, side: 8.5, along: 62, direction: -1 },
+      { axis: 'z', road: 36, side: -8.5, along: 75, direction: 1 },
+      { axis: 'z', road: 36, side: 8.5, along: 85, direction: 1 },
+      { axis: 'z', road: 36, side: -8.5, along: 10, direction: -1 },
+    ]);
+    game.setCamera({
+      mode: 'fixed',
+      fixed: { x: 33, y: 3, z: 78 },
+      target: { x: 40, y: 10, z: 20 },
+    });
+    game.setMissionName('Neon Mile');
+    game.setMoney(450);
+    game.setObjective(MISSIONS[4].objective);
     return;
   }
   if (name === 'city') {

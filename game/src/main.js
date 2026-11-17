@@ -709,6 +709,10 @@ const gameApi = {
   placeTraffic(placements) {
     traffic.placeForShot(placements);
   },
+  /** Place pedestrians for a staged shot (street). */
+  placePedestrians(placements) {
+    pedestrians.placeForShot(placements);
+  },
   setCamera(view) {
     Object.assign(cameraView, view);
     if (view.mode === 'follow') {
