@@ -105,13 +105,21 @@ export function stageShot(name, game) {
     return;
   }
   // drive: Lena in the Alba on the Palm Row boulevard, sea on the right.
+  // Wide elevated fixed camera west of the car, looking east down the
+  // boulevard: the Alba and traffic mid-frame, the beach and sea to the
+  // south, the city blocks and towers to the north — one open-world frame.
   game.placeCar(-40, 246, Math.PI / 2);
   game.placePlayer(-40, 242, Math.PI / 2);
   game.setInCar(true);
   game.placeTraffic([
     { axis: 'x', road: 252, along: 10, direction: 1 },
     { axis: 'x', road: 252, along: 60, direction: 1 },
+    { axis: 'x', road: 252, along: -45, direction: -1 },
   ]);
-  game.setCamera({ mode: 'follow', yaw: Math.PI / 2, pitch: 0.18, distance: 9.5 });
+  game.setCamera({
+    mode: 'fixed',
+    fixed: { x: -75, y: 14, z: 272 },
+    target: { x: 0, y: 2, z: 246 },
+  });
   game.setObjective(MISSIONS[0].objective);
 }

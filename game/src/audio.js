@@ -1,9 +1,17 @@
 // Audio: every sound in Solmar Bay is procedural WebAudio — no audio files.
 // An engine hum that follows the car's speed, a two-tone siren while the
 // wanted level is up, noise-burst gunshots, a UI click, a mission-complete
-// chime, and a light bass-and-pad music loop. The context is created lazily
+// chime, a light bass-and-pad music loop, and a 3-station car radio (R while
+// driving) that swaps the music loop. The context is created lazily
 // on the first user gesture (browsers block audio before one), and every
 // method is a no-op until then, so headless screenshots stay silent and safe.
+/** The car radio's three stations: name, bass line, wave, bar length, volume. */
+export const RADIO_STATIONS = [
+  { name: 'Bay FM 87.9', bass: [55, 43.65, 65.41, 49], wave: 'triangle', interval: 2000, gain: 0.06 },
+  { name: 'Neon 101.5', bass: [110, 87.31, 98, 130.81], wave: 'sawtooth', interval: 1000, gain: 0.03 },
+  { name: 'Solmar Classics 94.3', bass: [65.41, 55, 73.42, 49], wave: 'sine', interval: 2600, gain: 0.07 },
+];
+
 export class AudioManager {
   constructor() {
     this.context = null;
@@ -14,6 +22,7 @@ export class AudioManager {
     this.sirenGain = null;
     this.musicTimer = null;
     this.musicStep = 0;
+    this.stationIndex = 0;
     this.enabled = true;
     this.lastEngineSpeed = 0;
   }
@@ -159,29 +168,44 @@ export class AudioManager {
   }
 
   /**
-   * The music loop: a slow bass line (A minor: A1, F1, C2, G1) with a soft
-   * pad note on top, one bar every two seconds, scheduled by a timer.
-   * Quiet by design — it sits under the engine and the siren.
+   * The music loop: the current radio station's bass line with a soft pad
+   * note on top, one bar per interval, scheduled by a timer. Quiet by
+   * design — it sits under the engine and the siren.
    */
   startMusic() {
-    if (!this.context || this.musicTimer) return;
-    const bass = [55, 43.65, 65.41, 49];
+    if (!this.context) return;
+    this.stopMusic();
+    const station = RADIO_STATIONS[this.stationIndex];
+    this.musicStep = 0;
+    const barSeconds = station.interval / 1000;
     this.musicTimer = setInterval(() => {
       if (!this.ready) return;
-      const root = bass[this.musicStep % bass.length];
+      const root = station.bass[this.musicStep % station.bass.length];
       this.musicStep += 1;
       const osc = this.context.createOscillator();
-      osc.type = 'triangle';
+      osc.type = station.wave;
       osc.frequency.value = root;
       const gain = this.context.createGain();
       gain.gain.setValueAtTime(0.0001, this.context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.06, this.context.currentTime + 0.1);
-      gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + 1.9);
+      gain.gain.exponentialRampToValueAtTime(station.gain, this.context.currentTime + 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + barSeconds * 0.95);
       osc.connect(gain);
       gain.connect(this.master);
       osc.start();
-      osc.stop(this.context.currentTime + 2);
-    }, 2000);
+      osc.stop(this.context.currentTime + barSeconds);
+    }, station.interval);
+  }
+
+  /** The station now playing. */
+  get stationName() {
+    return RADIO_STATIONS[this.stationIndex].name;
+  }
+
+  /** Cycle to the next radio station; returns its name for the HUD. */
+  cycleStation() {
+    this.stationIndex = (this.stationIndex + 1) % RADIO_STATIONS.length;
+    if (this.context) this.startMusic();
+    return this.stationName;
   }
 
   stopMusic() {

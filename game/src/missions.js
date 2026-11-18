@@ -1,4 +1,4 @@
-// Missions: the six story missions of "High Tide", in order. Each mission is a
+// Missions: the eight story missions of "High Tide", in order. Each mission is a
 // short list of steps — reach a waypoint, deliver parcels, steal a car without
 // raising heat, clear a shootout, tail a courier, escape at four stars — with
 // a timer or a fail condition where the story needs one. The manager owns the
@@ -60,6 +60,25 @@ export const MISSION_DEFS = [
     steps: [
       { kind: 'reach', x: 370, z: 0, radius: 10, label: 'Reach the boat yard on Isla Verde' },
       { kind: 'escape', x: -180, z: -124, radius: 8, label: 'Escape across the causeway at 4 stars' },
+    ],
+  },
+  {
+    name: 'Ghost Ledger',
+    reward: 1200,
+    timeLimit: 300,
+    steps: [
+      { kind: 'reach', x: 180, z: 252, radius: 7, label: 'Pick up Kaine\u2019s ledger — Palm Row hotels' },
+      { kind: 'reach', x: -180, z: -180, radius: 10, label: 'Deliver the ledger to Chief Okafor at Old Harbor' },
+      { kind: 'escape', x: -180, z: -124, radius: 8, label: 'Lose Kaine\u2019s crew — reach Rosa\u2019s garage' },
+    ],
+  },
+  {
+    name: 'Solmar Sunrise',
+    reward: 1800,
+    steps: [
+      { kind: 'reach', x: 36, z: 36, radius: 8, label: 'Reach Neon Mile — meet Nico at dawn' },
+      { kind: 'reach', x: 370, z: 0, radius: 10, label: 'Drive Nico to the boat yard on Isla Verde' },
+      { kind: 'reach', x: -180, z: -124, radius: 8, label: 'Bring Nico home to Rosa\u2019s garage' },
     ],
   },
 ];

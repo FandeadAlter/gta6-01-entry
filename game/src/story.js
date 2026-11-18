@@ -18,7 +18,7 @@ export function line(speaker, text) {
   return { speaker, text };
 }
 
-/** Intro and outro lines for each of the six missions, in order. */
+/** Intro and outro lines for each of the eight missions, in order. */
 export const MISSION_DIALOGUE = [
   {
     intro: [
@@ -80,6 +80,29 @@ export const MISSION_DIALOGUE = [
     outro: [
       line('lena', 'Nico — you\u2019re free. Kaine\u2019s empire ends tonight.'),
       line('rosa', 'High tide, Lena. You did it. Solmar Bay is yours again.'),
+    ],
+  },
+  {
+    intro: [
+      line('rosa', 'Kaine kept a ledger — every bribe, every name. It\u2019s at the Palm Row hotels.'),
+      line('lena', 'A ledger beats a gunfight. I\u2019ll grab it.'),
+      line('okafor', 'Bring that ledger to Old Harbor, Lena. It ends Kaine\u2019s friends in high places.'),
+    ],
+    outro: [
+      line('okafor', 'This ledger closes three cases. You did good, Miss Marín.'),
+      line('lena', 'One loose end left — Nico. Then we\u2019re done.'),
+    ],
+  },
+  {
+    intro: [
+      line('nico', 'Lena? You\u2019re really here. I thought Kaine would—'),
+      line('lena', 'He won\u2019t. Not anymore. Get in, little brother — one last drive.'),
+      line('rosa', 'Sunrise over the bay, you two. Bring him home safe.'),
+    ],
+    outro: [
+      line('nico', 'Home. I forgot what that felt like.'),
+      line('rosa', 'High tide, low tide — family is family. Solmar Bay is yours, both of you.'),
+      line('lena', 'Solmar Sunrise. We made it.'),
     ],
   },
 ];

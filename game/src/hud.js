@@ -29,10 +29,10 @@ export class HudManager {
       activityLine: doc.getElementById('activity-line'),
       missionName: doc.getElementById('mission-name'),
       missionTimer: doc.getElementById('mission-timer'),
+      radio: doc.getElementById('radio'),
       speed: doc.getElementById('speed-value'),
       speedUnit: doc.getElementById('speed-unit'),
       clock: doc.getElementById('clock'),
-      fps: doc.getElementById('fps'),
       prompt: doc.getElementById('prompt'),
       district: doc.getElementById('district-label'),
       minimap: doc.getElementById('minimap'),
@@ -49,7 +49,7 @@ export class HudManager {
       // speed starts at -2 (not -1) so the first update also hides the
       // "km/h" unit when Lena is on foot; -1 is the on-foot speed itself.
       missionName: '', timer: '', speed: -2, prompt: null, district: '',
-      weapon: '', ammo: '', dialogue: null,
+      weapon: '', ammo: '', dialogue: null, radio: '',
     };
   }
 
@@ -214,7 +214,7 @@ export class HudManager {
    * Refresh every HUD element from the current game state. `state` carries
    * money, health, armor, wanted, objective, missionName, timer (seconds, 0
    * hides it), speedKmh, inCar, prompt, weapon, ammo text, dialogue (a
-   * { speakerName, speakerColor, text } or null), and fps. `world` is what
+   * { speakerName, speakerColor, text } or null). `world` is what
    * drawMinimap needs.
    */
   update(state, world) {
@@ -257,6 +257,13 @@ export class HudManager {
       el.missionTimer.textContent = timerText;
       el.missionTimer.style.visibility = timerText ? 'visible' : 'hidden';
     }
+    // Radio: the station name, shown briefly after R cycles it while driving.
+    const radioText = state.radio || '';
+    if (radioText !== this.last.radio) {
+      this.last.radio = radioText;
+      el.radio.textContent = radioText;
+      el.radio.style.visibility = radioText ? 'visible' : 'hidden';
+    }
     const speedKmh = state.inCar ? state.speedKmh : -1;
     if (speedKmh !== this.last.speed) {
       this.last.speed = speedKmh;
@@ -298,7 +305,6 @@ export class HudManager {
     // Crosshair: only on foot with the pistol out.
     el.crosshair.style.visibility = (!state.inCar && state.weapon === 'pistol') ? 'visible' : 'hidden';
     el.clock.textContent = CLOCK;
-    el.fps.textContent = `${state.fps} fps`;
     this.drawMinimap(world);
   }
 }

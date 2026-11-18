@@ -235,7 +235,7 @@ export const PALETTE = {
   gold: '#f2c94c',
 };
 
-/** The story's six missions, in order. Step 2 shows only the first objective line. */
+/** The story's eight missions, in order. Step 2 shows only the first objective line. */
 export const MISSIONS = [
   { name: 'Homecoming', objective: 'Drive Rosa\u2019s Alba to Old Harbor' },
   { name: 'Courier Run', objective: 'Deliver three parcels across Palm Row' },
@@ -243,6 +243,8 @@ export const MISSIONS = [
   { name: 'Harbor Lights', objective: 'Clear the dock' },
   { name: 'Neon Mile', objective: 'Tail Kaine\u2019s courier through downtown' },
   { name: 'High Tide', objective: 'Escape across the causeway at 4 stars' },
+  { name: 'Ghost Ledger', objective: 'Deliver Kaine\u2019s ledger to Chief Okafor' },
+  { name: 'Solmar Sunrise', objective: 'Bring Nico home to Rosa\u2019s garage' },
 ];
 
 /** Side activities (Step 5): taxi fares, courier runs, street races. */

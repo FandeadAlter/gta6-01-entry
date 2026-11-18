@@ -1,7 +1,7 @@
 // Boot and the one loop: input is read every frame, the world advances in fixed
 // 1/60 s steps (several in a slow frame, none in a fast one), and the renderer
 // paints what is there. The game moves between three screens: title, play and
-// paused. Step 4: six story missions with dialogue, pistol combat against
+// paused. Step 4: eight story missions with dialogue, pistol combat against
 // Kaine's men, a full HUD with minimap, a versioned save, and procedural audio
 // — wired into the same loop.
 //
@@ -86,6 +86,8 @@ const state = {
 let recklessTimer = 0;
 let smokeTimer = 0;
 let missionLabel = '';
+let radioLabel = '';
+let radioUntil = 0;
 let gunfireTimer = 0;
 let lowHealthWarned = false;
 let audioStarted = false;
@@ -495,7 +497,16 @@ function stepWorld(dt, input, actions) {
       }
     }
   }
-  if (actions & ACTION_RELOAD) combat.startReload();
+  // R reloads on foot — but in a car it cycles the radio instead.
+  if (actions & ACTION_RELOAD) {
+    if (state.inCar) {
+      radioLabel = `♪ ${audio.cycleStation()}`;
+      radioUntil = performance.now() + 4000;
+      audio.uiClick();
+    } else {
+      combat.startReload();
+    }
+  }
 
   const mouse = input.takeMouseDelta();
   if (state.inCar) {
@@ -603,7 +614,7 @@ function updateHud() {
     weapon: combat.weapon,
     ammo: combat.hasPistol ? `${combat.ammoInMag} / ${combat.ammoReserve}` : '',
     dialogue: line && speaker ? { speakerName: speaker.name, speakerColor: speaker.color, text: line.text } : null,
-    fps: renderer.getFps(),
+    radio: radioUntil > performance.now() ? radioLabel : '',
   }, { player, car, traffic, fleet, police, missions, combat, activities, collectibles, garage });
 }
 
@@ -611,7 +622,7 @@ function hudPrompt() {
   if (state.inCar) {
     if (garage.isInGarage(car.x, car.z)) return 'Get out here to keep this car & save';
     if (car.specKey === 'taxi' && !activities.active) return 'Taxi — pick up the passenger on Palm Row';
-    return '';
+    return 'R — radio';
   }
   if (nearCar()) return `E — Get in the ${car.spec.name}`;
   const stored = garage.nearestStored(player.x, player.z);
@@ -793,7 +804,7 @@ function runShot(name) {
   showScreen(SCREEN_PLAY);
   let painted = 0;
   function paint() {
-    // Keep painting after the shot is ready, so the fps counter stays live.
+    // Keep painting after the shot is ready, so the scene stays live.
     requestAnimationFrame(paint);
     renderer.draw({ player, car, inCar: state.inCar, camera: cameraView, shake: effects.shakeOffset() }, STEP);
     updateHud();
