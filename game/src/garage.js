@@ -59,6 +59,9 @@ export class GarageManager {
   }
 
   /** Load the owned list from a save (display meshes are rebuilt by syncOwned). */
+  get ownedCount() {
+    return this.owned.length;
+  }
   setOwned(specKeys) {
     this.owned = (specKeys || []).filter((key) => VEHICLES[key]).slice(0, GARAGE.maxSlots);
   }

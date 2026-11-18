@@ -126,6 +126,12 @@ export function createRenderer(canvas, random) {
   sun.shadow.camera.far = 700;
   sun.shadow.bias = -0.0006;
   scene.add(sun);
+
+  // A warm fill light from the east, so the shadow side of buildings and
+  // cars never goes flat black in a screenshot — the city keeps its colour
+  // even when the sun is behind it.
+  const fill = new THREE.HemisphereLight(0xbfd9ff, 0x8a6a4a, 0.55);
+  scene.add(fill);
   scene.add(sun.target);
 
   const hemisphere = new THREE.HemisphereLight(0xffd9a8, 0x5a4a3a, 0.9);

@@ -151,6 +151,20 @@ export class MissionManager {
     return this.def ? this.def.name : '';
   }
 
+  /** "CH 5 · STAGE 2/3": the chapter and the step the player is on, for the HUD. */
+  get stageLabel() {
+    if (!this.def) return '';
+    const chapter = MISSIONS[this.index] ? MISSIONS[this.index].chapter : '';
+    const total = this.def.steps.length;
+    const current = Math.min(this.stepIndex + 1, total);
+    return `${chapter} · STAGE ${current}/${total}`;
+  }
+
+  /** Respect 0-4: one point per two missions reached, for the HUD bar. */
+  get respect() {
+    return Math.min(4, Math.floor(this.index / 2));
+  }
+
   /** The objective line the HUD shows for the current step. */
   get objective() {
     if (this.status === 'done') return 'All missions complete — Solmar Bay is yours';

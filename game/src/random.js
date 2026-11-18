@@ -25,3 +25,13 @@ export function rangeInt(random, min, max) {
 export function pick(random, array) {
   return array[Math.floor(random() * array.length)];
 }
+
+/** A shuffled copy of an array, using the seeded random. */
+export function shuffle(random, array) {
+  const out = [...array];
+  for (let i = out.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}

@@ -1,9 +1,11 @@
 // Police: the five-star wanted system. Heat rises with theft, reckless driving
 // and hitting pedestrians, and decays when the player is out of sight. The
 // response scales with the stars — foot officers, cruisers in pursuit,
-// roadblocks, spike strips and a helicopter — and ends in Busted or Wasted.
+// roadblocks, spike strips and a helicopter from 3 stars up — and ends in
+// Busted or Wasted. The response list the HUD shows names every unit in the
+// chase with its callsign, its distance to the player and what it is doing.
 import * as THREE from 'three';
-import { POLICE, VEHICLES } from './config.js';
+import { POLICE, POLICE_UNITS, VEHICLES } from './config.js';
 import { makeVehicleMesh } from './vehicles.js';
 
 export const OUTCOME_NONE = 'none';
@@ -40,7 +42,10 @@ function makeOfficerMesh() {
 function makeHelicopterMesh() {
   const group = new THREE.Group();
   group.name = 'sbpd-helicopter';
-  const body = new THREE.MeshLambertMaterial({ color: 0x1a2a4a });
+  // White body: the dark navy one vanished against the dusk sky in the
+  // cover shot. A police helicopter reads as a white silhouette with a
+  // dark rotor, in the game as well as in the screenshot.
+  const body = new THREE.MeshLambertMaterial({ color: 0xe8e8e8 });
   const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.4, 3.2), body);
   cabin.castShadow = true;
   group.add(cabin);
@@ -147,6 +152,7 @@ export class PoliceManager {
       this.group.add(mesh);
       this.cruisers.push({
         x: 0, z: 0, heading: 0, speed: 0, mesh, stuckTimer: 0,
+        callsign: POLICE_UNITS[this.cruisers.length % POLICE_UNITS.length],
       });
     }
     while (this.cruisers.length > wantCruisers) {
@@ -199,9 +205,34 @@ export class PoliceManager {
     }
   }
 
+  /**
+   * The chase, as the HUD lists it: every unit with its callsign, its
+   * distance to the player in metres, and what it is doing. Cruisers close
+   * in are RAMMING, the rest are in PURSUIT; roadblocks hold their ground;
+   * the helicopter keeps the player IN SIGHT from above.
+   */
+  responseList(playerX, playerZ) {
+    if (this.wanted <= 0) return [];
+    const units = [];
+    for (const cruiser of this.cruisers) {
+      const distance = Math.round(Math.hypot(cruiser.x - playerX, cruiser.z - playerZ));
+      units.push({ callsign: cruiser.callsign || 'IBIS-43', distance, action: distance < 15 ? 'RAMMING' : 'PURSUIT' });
+    }
+    for (const block of this.roadblocks) {
+      const distance = Math.round(Math.hypot(block.x - playerX, block.z - playerZ));
+      units.push({ callsign: 'KESTREL-31', distance, action: 'ROADBLOCK' });
+    }
+    if (this.helicopter) {
+      const distance = Math.round(Math.hypot(this.helicopter.x - playerX, this.helicopter.z - playerZ));
+      units.push({ callsign: 'AIR-1', distance, action: 'IN SIGHT' });
+    }
+    units.sort((a, b) => a.distance - b.distance);
+    return units.slice(0, 7);
+  }
+
   /** Place the response around the player for a staged shot (no stepping). */
   stageChase(playerX, playerZ, playerHeading) {
-    this.setWanted(3);
+    this.setWanted(4);
     this.cruisers.forEach((cruiser, index) => {
       // One cruiser overtakes close ahead on the left (visible in the chase frame),
       // the rest close in behind on either side.
@@ -227,6 +258,22 @@ export class PoliceManager {
       block.mesh.position.set(block.x, 0, block.z);
       block.mesh.rotation.y = block.heading;
     });
+    // The helicopter hangs ahead and above the player, in the frame, its
+    // searchlight cone pointing down at the road. It flies low enough to
+    // read (y=10 — at y=13 it sat just above the top of the frame and only
+    // the cone showed; at 30 m it was far above it) and offset to the side,
+    // so it never hides behind the player's own car.
+    if (this.helicopter && this.helicopterMesh) {
+      // Offset to the beach side of the road: on the north side the body
+      // hid against the dark tree line; over the bright sea and sand the
+      // white silhouette reads at once. Low (y=8) and close (12 m ahead):
+      // at y=10 it still sat above the top of the frame and only the
+      // searchlight cone showed.
+      this.helicopter.x = playerX + Math.sin(playerHeading) * 12 - Math.cos(playerHeading) * 6;
+      this.helicopter.z = playerZ + Math.cos(playerHeading) * 12 + Math.sin(playerHeading) * 6;
+      this.helicopterMesh.position.set(this.helicopter.x, 8, this.helicopter.z);
+      this.helicopterMesh.rotation.y = playerHeading + Math.PI;
+    }
     this.syncMeshes();
   }
 

@@ -60,6 +60,17 @@ function pedPosition(ped) {
   return { x: ped.road + ped.side, z: ped.along };
 }
 
+/** How many pedestrians are within `radius` metres of (x, z) — the HUD and
+ * the street shot use it to say how busy a block is. */
+export function crowdNear(manager, x, z, radius) {
+  let count = 0;
+  for (const ped of manager.peds || []) {
+    const pos = pedPosition(ped);
+    if (Math.hypot(pos.x - x, pos.z - z) <= radius) count += 1;
+  }
+  return count;
+}
+
 export class PedestrianManager {
   constructor(scene, random) {
     this.group = new THREE.Group();

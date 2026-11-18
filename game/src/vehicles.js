@@ -74,6 +74,16 @@ export function isSmoking(vehicle) {
   return vehicle.damage > 0.45;
 }
 
+/** Car condition 0-1 for the HUD bar: a fresh car is 1, a wreck is 0. */
+export function vehicleCondition(vehicle) {
+  return Math.max(0, Math.min(1, 1 - (vehicle.damage || 0)));
+}
+
+/** A spec's top speed in km/h, for the HUD and the chase staging. */
+export function vehicleTopSpeedKmh(spec) {
+  return Math.round(spec.maxSpeed * 3.6);
+}
+
 /** A low-poly procedural car mesh, facing +z. Kind changes the silhouette. */
 export function makeVehicleMesh(spec) {
   const group = new THREE.Group();

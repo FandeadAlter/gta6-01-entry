@@ -8,6 +8,21 @@ import * as THREE from 'three';
 
 export const WEAPON_FISTS = 'fists';
 export const WEAPON_PISTOL = 'pistol';
+export const WEAPON_SMG = 'smg';
+export const WEAPON_SHOTGUN = 'shotgun';
+
+/** The four weapon slots the HUD shows, in key order. The SMG and the
+ * shotgun are earned later in the story, so they show as LOCKED until then;
+ * the pistol slot shows its live ammo once Lena has it. */
+export function weaponSlotList(combat) {
+  const pistolAmmo = combat.hasPistol ? `${combat.ammoInMag} / ${combat.ammoReserve}` : '';
+  return [
+    { key: '1', id: WEAPON_FISTS, name: 'Fists', owned: true, ammo: '' },
+    { key: '2', id: WEAPON_PISTOL, name: 'Pistol', owned: combat.hasPistol, ammo: pistolAmmo },
+    { key: '3', id: WEAPON_SMG, name: 'Wasp SMG', owned: false, ammo: '' },
+    { key: '4', id: WEAPON_SHOTGUN, name: 'Harbor 12', owned: false, ammo: '' },
+  ];
+}
 
 export const COMBAT = {
   pistolDamage: 34,

@@ -10,6 +10,11 @@ export const ACTION_JUMP = 4;
 export const ACTION_ENTER = 8;
 export const ACTION_FIRE = 16;
 export const ACTION_RELOAD = 32;
+/** Weapon-slot keys 1-4, as bit flags above the movement actions. */
+export const ACTION_WEAPON_1 = 64;
+export const ACTION_WEAPON_2 = 128;
+export const ACTION_WEAPON_3 = 256;
+export const ACTION_WEAPON_4 = 512;
 
 const FORWARD = new Set(['KeyW', 'ArrowUp']);
 const BACK = new Set(['KeyS', 'ArrowDown']);
@@ -22,11 +27,17 @@ const ENTER = new Set(['KeyE']);
 const JUMP_KEY = new Set(['Space']);
 const FIRE_KEY = new Set(['KeyF']);
 const RELOAD_KEY = new Set(['KeyR']);
+const WEAPON_KEYS = new Map([
+  ['Digit1', ACTION_WEAPON_1],
+  ['Digit2', ACTION_WEAPON_2],
+  ['Digit3', ACTION_WEAPON_3],
+  ['Digit4', ACTION_WEAPON_4],
+]);
 
 /** Keys the game uses, so the page never scrolls under them. */
 const GAME_KEYS = new Set([
   ...FORWARD, ...BACK, ...LEFT, ...RIGHT, ...SPRINT, ...CONFIRM, ...PAUSE, ...ENTER,
-  ...FIRE_KEY, ...RELOAD_KEY,
+  ...FIRE_KEY, ...RELOAD_KEY, ...WEAPON_KEYS.keys(),
 ]);
 
 export function createInput(target) {
@@ -48,6 +59,8 @@ export function createInput(target) {
       if (ENTER.has(event.code)) actions |= ACTION_ENTER;
       if (JUMP_KEY.has(event.code)) actions |= ACTION_JUMP;
       if (RELOAD_KEY.has(event.code)) actions |= ACTION_RELOAD;
+      const weaponAction = WEAPON_KEYS.get(event.code);
+      if (weaponAction) actions |= weaponAction;
     }
     held.add(event.code);
   });

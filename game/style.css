@@ -1,5 +1,7 @@
 /* Solmar Bay HUD and menu styling. Warm golden-hour palette, translucent dark
-   panels so the city stays visible behind the interface. */
+   panels so the city stays visible behind the interface. The HUD is dense on
+   purpose: the police response list, the weapon slots, the radio now-playing
+   line and the respect bar all read at a glance, even shrunk to a screenshot. */
 html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1410; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
@@ -10,19 +12,44 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #1a1410; fon
 #money { font-size: 22px; font-weight: 700; margin-top: 2px; }
 .bar { width: 170px; height: 9px; margin-top: 7px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(245, 239, 228, 0.5); border-radius: 5px; overflow: hidden; }
 #health-fill { height: 100%; width: 100%; background: #5ec96a; }
-#hud-top-center { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }
-#objective { font-size: 17px; font-weight: 600; background: rgba(0, 0, 0, 0.45); padding: 7px 16px; border-radius: 6px; }
+/* SBPD response: one row per police unit in the chase, callsign, distance and
+   what it is doing — RAMMING, PURSUIT, ROADBLOCK or SEARCH. Hidden at 0 stars. */
+#police-response { margin-top: 10px; font-size: 13px; font-weight: 700; line-height: 1.55; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(217, 42, 42, 0.55); border-radius: 6px; padding: 7px 10px; min-width: 210px; }
+#police-response .pr-title { color: #ff8a8a; letter-spacing: 1px; font-size: 12px; }
+#police-response .pr-row { display: flex; justify-content: space-between; gap: 10px; }
+#police-response .pr-action { color: #ffe14f; }
+#police-response .pr-action.ram { color: #ff5a5a; }
+#hud-top-center { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); text-align: center; }
+#objective { font-size: 17px; font-weight: 600; background: rgba(0, 0, 0, 0.45); padding: 7px 16px; border-radius: 6px; display: inline-block; }
 #hud-top-right { position: absolute; top: 16px; right: 18px; text-align: right; }
 #clock { font-size: 22px; font-weight: 700; }
+#day-label { font-size: 13px; font-weight: 700; color: #f2c94c; letter-spacing: 1px; margin-top: 2px; }
+/* Radio now-playing: station, song and artist, always on while driving. */
+#radio-now { margin-top: 6px; font-size: 14px; font-weight: 700; color: #ff9ad5; background: rgba(0, 0, 0, 0.55); border-left: 3px solid #ff4fa0; padding: 6px 10px; border-radius: 4px; text-align: left; }
+#radio-now .rn-song { display: block; font-size: 12px; font-weight: 600; color: #f5efe4; }
 #hud-bottom-left { position: absolute; left: 18px; bottom: 18px; }
 #minimap { display: block; border: 2px solid rgba(245, 239, 228, 0.65); border-radius: 50%; background: #2e7fa8; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5); }
 #district-label { margin-top: 6px; font-size: 15px; font-weight: 600; text-align: center; }
+#respect-line { margin-top: 6px; display: flex; align-items: center; gap: 8px; justify-content: center; font-size: 12px; font-weight: 700; color: #ffe14f; }
+#respect-bar { display: inline-block; width: 110px; height: 7px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(245, 239, 228, 0.5); border-radius: 4px; overflow: hidden; }
+#respect-fill { display: block; height: 100%; width: 0%; background: #f2c94c; }
 #hud-bottom-right { position: absolute; right: 22px; bottom: 20px; text-align: right; }
+/* Weapon slots 1-4: the owned weapon is bright with ammo, locked ones are dim. */
+#weapon-slots { display: flex; gap: 6px; justify-content: flex-end; margin-bottom: 6px; }
+#weapon-slots .slot { min-width: 52px; font-size: 12px; font-weight: 700; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(245, 239, 228, 0.4); border-radius: 5px; padding: 5px 7px; text-align: center; }
+#weapon-slots .slot.active { border-color: #f2c94c; color: #ffe14f; }
+#weapon-slots .slot.locked { opacity: 0.45; }
+#weapon-slots .slot .slot-ammo { display: block; font-size: 11px; color: #ffe14f; }
 #speed { font-size: 34px; font-weight: 800; }
 #speed-unit { font-size: 15px; font-weight: 600; }
+#car-line { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+#car-name { margin-right: 8px; }
+#car-condition { display: inline-block; width: 90px; height: 7px; background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(245, 239, 228, 0.5); border-radius: 4px; overflow: hidden; vertical-align: middle; }
+#car-condition-fill { display: block; height: 100%; width: 100%; background: #5ec96a; }
 #prompt { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%); font-size: 17px; font-weight: 600; background: rgba(0, 0, 0, 0.55); padding: 8px 16px; border-radius: 6px; }
 #armor-fill { height: 100%; width: 0; background: #5aa8e8; }
 #mission-name { font-size: 14px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #f2c94c; text-align: center; margin-bottom: 4px; }
+#mission-stage { font-size: 13px; font-weight: 700; color: #ffe14f; text-align: center; margin-bottom: 4px; }
 #activity-line { font-size: 15px; font-weight: 600; color: #35e0e0; background: rgba(0, 0, 0, 0.45); padding: 5px 14px; border-radius: 6px; text-align: center; margin-top: 6px; }
 #mission-timer { display: inline-block; margin-top: 6px; font-size: 20px; font-weight: 800; color: #ffe14f; background: rgba(0, 0, 0, 0.45); padding: 4px 12px; border-radius: 6px; }
 #radio { margin-top: 6px; font-size: 15px; font-weight: 700; color: #35e0e0; background: rgba(0, 0, 0, 0.45); padding: 5px 14px; border-radius: 6px; text-align: center; }

@@ -19,9 +19,11 @@
     <div id="money">$0</div>
     <div class="bar"><div id="health-fill"></div></div>
     <div class="bar" id="armor-bar" style="visibility:hidden"><div id="armor-fill"></div></div>
+    <div id="police-response" aria-label="SBPD response"></div>
   </div>
   <div id="hud-top-center">
     <div id="mission-name">Homecoming</div>
+    <div id="mission-stage"></div>
     <div id="objective">Drive Rosa&rsquo;s Alba to Old Harbor</div>
     <div id="activity-line" style="visibility:hidden"></div>
     <div id="mission-timer" style="visibility:hidden"></div>
@@ -29,13 +31,18 @@
   </div>
   <div id="hud-top-right">
     <div id="clock">17:42</div>
+    <div id="radio-now" style="visibility:hidden"></div>
+    <div id="day-label">DAY 1</div>
   </div>
   <div id="hud-bottom-left">
     <canvas id="minimap" width="220" height="220"></canvas>
     <div id="district-label">Old Harbor</div>
+    <div id="respect-line"><span id="respect-label">RESPECT 0</span><span id="respect-bar"><span id="respect-fill"></span></span></div>
   </div>
   <div id="hud-bottom-right">
+    <div id="weapon-slots" aria-label="Weapons"></div>
     <div id="weapon-line"><span id="weapon">Fists</span> <span id="ammo" style="visibility:hidden"></span></div>
+    <div id="car-line"><span id="car-name">Alba</span><span id="car-condition"><span id="car-condition-fill"></span></span></div>
     <div id="speed"><span id="speed-value"></span> <span id="speed-unit">km/h</span></div>
   </div>
   <div id="crosshair" style="visibility:hidden">+</div>
@@ -54,7 +61,8 @@
       <p><b>W A S D</b> — walk / drive &nbsp; <b>Shift</b> — sprint</p>
       <p><b>Space</b> — jump &nbsp; <b>E</b> — get in / out of a car</p>
       <p><b>Click / F</b> — fire &nbsp; <b>R</b> — reload (radio in a car) &nbsp; <b>P</b> — pause</p>
-      <p><b>Mouse drag</b> — look around &nbsp; <b>M</b> — mission briefing</p>
+      <p><b>1 / 2 / 3 / 4</b> — switch weapon &nbsp; <b>M</b> — mission briefing</p>
+      <p><b>Mouse drag</b> — look around</p>
       <p>Drive the Harbor Taxi for fares, run Rosa&rsquo;s parcels, race on Palm Row.</p>
       <p>Find 20 sun postcards ☀ — park in the green garage ring to keep a car &amp; save.</p>
       <p>Steal a car, lose the cops, pay off Nico&rsquo;s debt.</p>

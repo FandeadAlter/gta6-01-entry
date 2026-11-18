@@ -13,14 +13,14 @@ import { createRandom } from './random.js';
 import { ACTION_CONFIRM, ACTION_ENTER, ACTION_JUMP, ACTION_PAUSE, ACTION_RELOAD, createInput } from './input.js';
 import { createRenderer, SCREEN_PAUSED, SCREEN_PLAY, SCREEN_TITLE } from './render.js';
 import { stageShot } from './shots.js';
-import { VehicleFleet, createVehicle, isSmoking, stepVehicle } from './vehicles.js';
+import { VehicleFleet, createVehicle, isSmoking, stepVehicle, vehicleCondition } from './vehicles.js';
 import { TrafficManager } from './traffic.js';
 import { PedestrianManager } from './pedestrians.js';
 import { OUTCOME_BUSTED, OUTCOME_WASTED, PoliceManager } from './police.js';
 import { EffectsManager } from './effects.js';
 import { MissionManager, MISSION_DEFS, HARBOR_ENEMY_SPOTS } from './missions.js';
 import { StoryManager, MISSION_DIALOGUE, BARKS } from './story.js';
-import { CombatManager, WEAPON_FISTS } from './combat.js';
+import { CombatManager, WEAPON_FISTS, weaponSlotList } from './combat.js';
 import { ActivityManager } from './activities.js';
 import { CollectiblesManager } from './collectibles.js';
 import { GarageManager } from './garage.js';
@@ -86,6 +86,11 @@ const state = {
 let recklessTimer = 0;
 let smokeTimer = 0;
 let missionLabel = '';
+let missionStageOverride = '';
+let missionTimerOverride = 0;
+let shotSpeedKmh = null;
+let radioNowOverride = '';
+let respectOverride = null;
 let radioLabel = '';
 let radioUntil = 0;
 let gunfireTimer = 0;
@@ -607,14 +612,21 @@ function updateHud() {
     objective: state.objective,
     activityLine: activities.statusLine() || `☀ Sun postcards ${collectibles.foundCount}/20`,
     missionName: missionLabel || (missions.status === 'all-done' ? 'High Tide — complete' : missions.missionName),
-    timer: missions.timer,
-    speedKmh: Math.round(Math.abs(car.speed) * 3.6),
+    missionStage: missionStageOverride || missions.stageLabel,
+    timer: missionTimerOverride > 0 ? missionTimerOverride : missions.timer,
+    speedKmh: shotSpeedKmh !== null ? shotSpeedKmh : Math.round(Math.abs(car.speed) * 3.6),
     inCar: state.inCar,
     prompt: hudPrompt(),
     weapon: combat.weapon,
     ammo: combat.hasPistol ? `${combat.ammoInMag} / ${combat.ammoReserve}` : '',
+    weaponSlots: weaponSlotList(combat),
+    policeUnits: police.responseList(state.inCar ? car.x : player.x, state.inCar ? car.z : player.z),
+    respect: respectOverride !== null ? respectOverride : Math.max(missions.respect, Math.min(4, Math.floor(state.missionsCompleted / 2))),
+    carName: car.spec.name,
+    carCondition: vehicleCondition(car),
     dialogue: line && speaker ? { speakerName: speaker.name, speakerColor: speaker.color, text: line.text } : null,
     radio: radioUntil > performance.now() ? radioLabel : '',
+    radioNow: radioNowOverride || (state.inCar ? audio.nowPlayingLabel() : ''),
   }, { player, car, traffic, fleet, police, missions, combat, activities, collectibles, garage });
 }
 
@@ -766,6 +778,29 @@ const gameApi = {
   /** The HUD mission label for a staged shot (chase shows no mission name). */
   setMissionName(name) {
     missionLabel = name;
+  },
+  /** The HUD mission stage line for a staged shot ("CH 5 · STAGE 2/3"). */
+  setMissionStage(stage) {
+    missionStageOverride = stage;
+  },
+  /** The HUD mission timer for a staged shot, in seconds (0 hides it). */
+  setMissionTimer(seconds) {
+    missionTimerOverride = seconds;
+  },
+  /** The speed the HUD speedometer shows in a staged shot. Shot mode never
+   * steps the world, so the car's real speed is 0 — the staged speed is the
+   * speed the scene depicts, a chase at 148 km/h, a cruise at 96. */
+  setShotSpeed(kmh) {
+    shotSpeedKmh = kmh;
+  },
+  /** The radio now-playing line for a staged shot ("Bay FM 87.9 · song — artist"). */
+  setRadioNow(label) {
+    radioNowOverride = label;
+  },
+  /** The respect level (0-4) a staged shot shows: the chase is late-story,
+   * so it reads 3, the street 2, the opening drive 1. */
+  setRespect(value) {
+    respectOverride = value;
   },
   /** Stage the Harbor Lights shootout for ?shot=mission (no stepping). */  stageMissionScene() {
     missions.start(3);

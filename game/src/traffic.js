@@ -186,6 +186,15 @@ export class TrafficManager {
   }
 
   /** Positions of every traffic car, for the minimap. */
+  /** How many traffic cars are within `radius` metres of (x, z). */
+  carsNear(x, z, radius) {
+    let count = 0;
+    for (const pos of this.positions()) {
+      if (Math.hypot(pos.x - x, pos.z - z) <= radius) count += 1;
+    }
+    return count;
+  }
+
   positions() {
     return this.cars.map((car) => carPosition(car));
   }

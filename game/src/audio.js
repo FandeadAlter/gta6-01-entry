@@ -5,11 +5,12 @@
 // driving) that swaps the music loop. The context is created lazily
 // on the first user gesture (browsers block audio before one), and every
 // method is a no-op until then, so headless screenshots stay silent and safe.
-/** The car radio's three stations: name, bass line, wave, bar length, volume. */
+/** The car radio's three stations: name, bass line, wave, bar length, volume,
+ * and the song now playing on each — the HUD's radio line shows station + song. */
 export const RADIO_STATIONS = [
-  { name: 'Bay FM 87.9', bass: [55, 43.65, 65.41, 49], wave: 'triangle', interval: 2000, gain: 0.06 },
-  { name: 'Neon 101.5', bass: [110, 87.31, 98, 130.81], wave: 'sawtooth', interval: 1000, gain: 0.03 },
-  { name: 'Solmar Classics 94.3', bass: [65.41, 55, 73.42, 49], wave: 'sine', interval: 2600, gain: 0.07 },
+  { name: 'Bay FM 87.9', song: 'Neon Drive', artist: 'Pink Horizon', bass: [55, 43.65, 65.41, 49], wave: 'triangle', interval: 2000, gain: 0.06 },
+  { name: 'Neon 101.5', song: 'Sunset Run', artist: 'Lumen Kids', bass: [110, 87.31, 98, 130.81], wave: 'sawtooth', interval: 1000, gain: 0.03 },
+  { name: 'Solmar Classics 94.3', song: 'Harbor Lights', artist: 'Rosa Delgado', bass: [65.41, 55, 73.42, 49], wave: 'sine', interval: 2600, gain: 0.07 },
 ];
 
 export class AudioManager {
@@ -199,6 +200,12 @@ export class AudioManager {
   /** The station now playing. */
   get stationName() {
     return RADIO_STATIONS[this.stationIndex].name;
+  }
+
+  /** Station + song + artist, as the HUD's radio now-playing line shows it. */
+  nowPlayingLabel() {
+    const station = RADIO_STATIONS[this.stationIndex];
+    return `${station.name} · ${station.song} — ${station.artist}`;
   }
 
   /** Cycle to the next radio station; returns its name for the HUD. */

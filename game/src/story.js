@@ -117,6 +117,10 @@ export const BARKS = {
   wasted: [line('rosa', 'Lena! Wake up — the garage, now. You\u2019re not done yet.')],
   lowHealth: [line('lena', 'I\u2019m hurt. I need cover — or a pickup.')],
   pistol: [line('rosa', 'Pistol\u2019s loaded. Aim with the mouse, fire with a click.')],
+  chase: [
+    line('lena', 'Four stars and a helicopter. Time to disappear.'),
+    line('juno', 'Lose them on Palm Row — the garage is the only safe door.'),
+  ],
 };
 
 /**

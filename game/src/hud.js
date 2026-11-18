@@ -1,10 +1,11 @@
 // HUD: everything the player reads while playing — wanted stars, money,
-// health and armor bars, weapon and ammo, the mission name and objective,
-// a mission timer, the dialogue banner, the crosshair, the speedometer, the
-// district label, and the live canvas minimap (roads, player arrow, mission
-// blip, police, traffic and parked cars). Text is only rewritten when it
-// changes; the minimap is redrawn every frame because the world moves.
-import { CLOCK } from './config.js';
+// health and armor bars, the SBPD response list (callsign, distance, action),
+// weapon slots, the mission name, stage and timer, the radio now-playing line,
+// the speedometer with car name and condition, the district label, the respect
+// bar, and the live canvas minimap (roads, player arrow, mission blip, police,
+// traffic and parked cars). Text is only rewritten when it changes; the minimap
+// is redrawn every frame because the world moves.
+import { CLOCK, DAY_LABEL } from './config.js';
 
 const DISTRICT_NAMES = {
   palmRow: 'Palm Row',
@@ -25,19 +26,28 @@ export class HudManager {
       healthFill: doc.getElementById('health-fill'),
       armorFill: doc.getElementById('armor-fill'),
       armorBar: doc.getElementById('armor-bar'),
+      policeResponse: doc.getElementById('police-response'),
       objective: doc.getElementById('objective'),
       activityLine: doc.getElementById('activity-line'),
       missionName: doc.getElementById('mission-name'),
+      missionStage: doc.getElementById('mission-stage'),
       missionTimer: doc.getElementById('mission-timer'),
       radio: doc.getElementById('radio'),
+      radioNow: doc.getElementById('radio-now'),
+      dayLabel: doc.getElementById('day-label'),
       speed: doc.getElementById('speed-value'),
       speedUnit: doc.getElementById('speed-unit'),
       clock: doc.getElementById('clock'),
       prompt: doc.getElementById('prompt'),
       district: doc.getElementById('district-label'),
+      respectLabel: doc.getElementById('respect-label'),
+      respectFill: doc.getElementById('respect-fill'),
       minimap: doc.getElementById('minimap'),
       weapon: doc.getElementById('weapon'),
       ammo: doc.getElementById('ammo'),
+      weaponSlots: doc.getElementById('weapon-slots'),
+      carName: doc.getElementById('car-name'),
+      carConditionFill: doc.getElementById('car-condition-fill'),
       dialogue: doc.getElementById('dialogue'),
       dialogueSpeaker: doc.getElementById('dialogue-speaker'),
       dialogueText: doc.getElementById('dialogue-text'),
@@ -48,8 +58,9 @@ export class HudManager {
       money: -1, health: -1, armor: -1, wanted: -1, objective: '', activity: '',
       // speed starts at -2 (not -1) so the first update also hides the
       // "km/h" unit when Lena is on foot; -1 is the on-foot speed itself.
-      missionName: '', timer: '', speed: -2, prompt: null, district: '',
-      weapon: '', ammo: '', dialogue: null, radio: '',
+      missionName: '', missionStage: '', timer: '', speed: -2, prompt: null, district: '',
+      weapon: '', ammo: '', dialogue: null, radio: '', radioNow: '', police: '',
+      slots: '', carName: '', carCondition: -1, respect: -1,
     };
   }
 
@@ -210,12 +221,44 @@ export class HudManager {
     ctx.restore();
   }
 
+  /** Render the SBPD response list: header with unit count, one row per unit. */
+  renderPoliceResponse(units, wanted) {
+    const el = this.el.policeResponse;
+    if (!units || units.length === 0 || wanted <= 0) {
+      el.style.visibility = 'hidden';
+      return;
+    }
+    el.style.visibility = 'visible';
+    const key = units.map((u) => `${u.callsign}:${u.distance}:${u.action}`).join('|');
+    if (key === this.last.police) return;
+    this.last.police = key;
+    const rows = units.map((u) => {
+      const cls = u.action === 'RAMMING' ? 'pr-action ram' : 'pr-action';
+      return `<div class="pr-row"><span>${u.callsign}</span><span>${u.distance} m</span><span class="${cls}">${u.action}</span></div>`;
+    }).join('');
+    el.innerHTML = `<div class="pr-title">SBPD RESPONSE — ${units.length} UNITS · ${wanted}★</div>${rows}`;
+  }
+
+  /** Render the four weapon slots: owned bright with ammo, locked dim. */
+  renderWeaponSlots(slots, currentWeapon) {
+    if (!slots) return;
+    const key = slots.map((s) => `${s.key}:${s.name}:${s.owned ? 'y' : 'n'}:${s.ammo || ''}:${s.id === currentWeapon ? 'a' : ''}`).join('|');
+    if (key === this.last.slots) return;
+    this.last.slots = key;
+    this.el.weaponSlots.innerHTML = slots.map((s) => {
+      const cls = `slot${s.owned ? '' : ' locked'}${s.id === currentWeapon ? ' active' : ''}`;
+      const ammo = !s.owned ? '<span class="slot-ammo">LOCKED</span>' : (s.ammo ? `<span class="slot-ammo">${s.ammo}</span>` : '');
+      return `<div class="${cls}">${s.key} ${s.name}${ammo}</div>`;
+    }).join('');
+  }
+
   /**
    * Refresh every HUD element from the current game state. `state` carries
-   * money, health, armor, wanted, objective, missionName, timer (seconds, 0
-   * hides it), speedKmh, inCar, prompt, weapon, ammo text, dialogue (a
-   * { speakerName, speakerColor, text } or null). `world` is what
-   * drawMinimap needs.
+   * money, health, armor, wanted, objective, missionName, missionStage,
+   * timer (seconds, 0 hides it), speedKmh, inCar, prompt, weapon, ammo text,
+   * dialogue (a { speakerName, speakerColor, text } or null), policeUnits,
+   * weaponSlots, radioNow, respect (0-4) and carName/carCondition. `world`
+   * is what drawMinimap needs.
    */
   update(state, world) {
     const el = this.el;
@@ -237,6 +280,7 @@ export class HudManager {
       this.last.wanted = state.wanted;
       el.stars.textContent = '★'.repeat(state.wanted) + '☆'.repeat(5 - state.wanted);
     }
+    this.renderPoliceResponse(state.policeUnits, state.wanted);
     if (state.objective !== this.last.objective) {
       this.last.objective = state.objective;
       el.objective.textContent = state.objective;
@@ -251,6 +295,12 @@ export class HudManager {
       this.last.missionName = state.missionName;
       el.missionName.textContent = state.missionName;
     }
+    const stageText = state.missionStage || '';
+    if (stageText !== this.last.missionStage) {
+      this.last.missionStage = stageText;
+      el.missionStage.textContent = stageText;
+      el.missionStage.style.visibility = stageText ? 'visible' : 'hidden';
+    }
     const timerText = state.timer > 0 ? HudManager.formatTimer(state.timer) : '';
     if (timerText !== this.last.timer) {
       this.last.timer = timerText;
@@ -263,6 +313,18 @@ export class HudManager {
       this.last.radio = radioText;
       el.radio.textContent = radioText;
       el.radio.style.visibility = radioText ? 'visible' : 'hidden';
+    }
+    // Radio now-playing: station + song, always on while driving.
+    const radioNowText = state.inCar ? (state.radioNow || '') : '';
+    if (radioNowText !== this.last.radioNow) {
+      this.last.radioNow = radioNowText;
+      if (radioNowText) {
+        const [station, song] = radioNowText.split(' · ');
+        el.radioNow.innerHTML = `♪ ${station || radioNowText}<span class="rn-song">${song || ''}</span>`;
+        el.radioNow.style.visibility = 'visible';
+      } else {
+        el.radioNow.style.visibility = 'hidden';
+      }
     }
     const speedKmh = state.inCar ? state.speedKmh : -1;
     if (speedKmh !== this.last.speed) {
@@ -280,14 +342,30 @@ export class HudManager {
       this.last.district = districtName;
       el.district.textContent = districtName;
     }
+    if (state.respect !== undefined && state.respect !== this.last.respect) {
+      this.last.respect = state.respect;
+      el.respectLabel.textContent = `RESPECT ${state.respect}`;
+      el.respectFill.style.width = `${Math.max(0, Math.min(100, (state.respect / 4) * 100))}%`;
+    }
+    if (state.carName && state.carName !== this.last.carName) {
+      this.last.carName = state.carName;
+      el.carName.textContent = state.carName;
+    }
+    if (state.carCondition !== undefined && state.carCondition !== this.last.carCondition) {
+      this.last.carCondition = state.carCondition;
+      const pct = Math.max(0, Math.min(100, Math.round(state.carCondition * 100)));
+      el.carConditionFill.style.width = `${pct}%`;
+      el.carConditionFill.style.background = pct <= 25 ? '#d92a2a' : '#5ec96a';
+    }
+    this.renderWeaponSlots(state.weaponSlots, state.weapon);
     if (state.weapon !== this.last.weapon) {
       this.last.weapon = state.weapon;
-      el.weapon.textContent = state.weapon === 'pistol' ? 'Pistol' : 'Fists';
+      el.weapon.textContent = state.weapon === 'pistol' ? 'Pistol' : state.weapon === 'smg' ? 'Wasp SMG' : state.weapon === 'shotgun' ? 'Harbor 12' : 'Fists';
     }
     if (state.ammo !== this.last.ammo) {
       this.last.ammo = state.ammo;
       el.ammo.textContent = state.ammo;
-      el.ammo.style.visibility = state.weapon === 'pistol' ? 'visible' : 'hidden';
+      el.ammo.style.visibility = state.weapon === 'pistol' || state.weapon === 'smg' || state.weapon === 'shotgun' ? 'visible' : 'hidden';
     }
     // Dialogue banner: speaker name in their colour, then the line.
     const dialogueKey = state.dialogue ? `${state.dialogue.speakerName}:${state.dialogue.text}` : null;
@@ -303,8 +381,9 @@ export class HudManager {
       }
     }
     // Crosshair: only on foot with the pistol out.
-    el.crosshair.style.visibility = (!state.inCar && state.weapon === 'pistol') ? 'visible' : 'hidden';
+    el.crosshair.style.visibility = (!state.inCar && (state.weapon === 'pistol' || state.weapon === 'smg' || state.weapon === 'shotgun')) ? 'visible' : 'hidden';
     el.clock.textContent = CLOCK;
+    el.dayLabel.textContent = DAY_LABEL;
     this.drawMinimap(world);
   }
 }

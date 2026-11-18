@@ -54,6 +54,11 @@ export class CollectiblesManager {
     return this.cards.filter((card) => card.found).length;
   }
 
+  /** Postcards still to find, for the HUD's hunt line. */
+  get remainingCount() {
+    return POSTCARDS.count - this.foundCount;
+  }
+
   /** True once every postcard is found. */
   get allFound() {
     return this.foundCount >= POSTCARDS.count;

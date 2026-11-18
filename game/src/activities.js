@@ -14,6 +14,13 @@ export const ACTIVITY_TAXI = 'taxi';
 export const ACTIVITY_COURIER = 'courier';
 export const ACTIVITY_RACE = 'race';
 
+/** Human names for the three side activities, for the HUD and the briefing. */
+export const ACTIVITY_NAMES = {
+  [ACTIVITY_TAXI]: 'Taxi fares',
+  [ACTIVITY_COURIER]: 'Courier runs',
+  [ACTIVITY_RACE]: 'Street races',
+};
+
 const MARKER_COLORS = {
   taxi: 0xf2c94c,
   courier: 0x35e0e0,

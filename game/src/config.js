@@ -12,6 +12,9 @@ export const SAVE_KEY = 'solmar-bay.save.v1';
 /** The clock the HUD shows. Golden hour never moves, so screenshots stay consistent. */
 export const CLOCK = '17:42';
 
+/** The day the HUD shows. Lena's story runs over one long golden-hour day. */
+export const DAY_LABEL = 'DAY 1';
+
 export const WORLD = {
   /** Mainland slab half-extent: roads run from -252 to +252. */
   half: 258,
@@ -154,21 +157,48 @@ export const PEDS = {
   crossChance: 0.22,
 };
 
-/** Wanted level: heat points per offence, decay, and the response per star. */
+/** Wanted level: heat points per offence, decay, and the response per star.
+ * The helicopter joins at 3 stars, so a 3-star chase already has air support
+ * overhead — a chase shot at 3 stars shows the full response. */
 export const POLICE = {
   heatTheft: 35,
   heatReckless: 12,
   heatHitPed: 45,
   heatPerStar: 40,
   decayPerSecond: 3.5,
-  maxCruisers: [0, 0, 2, 3, 4, 5],
+  maxCruisers: [0, 0, 2, 4, 4, 5],
   maxOfficers: [0, 2, 2, 3, 4, 5],
   roadblockAt: 3,
-  helicopterAt: 4,
+  helicopterAt: 3,
   spikeAt: 4,
   bustedDistance: 1.6,
   bustedTime: 2.0,
   searchRadius: 90,
+};
+
+/** SBPD unit callsigns, in the order the response list shows them. */
+export const POLICE_UNITS = ['IBIS-43', 'TARPON-10', 'HERON-17', 'KESTREL-31', 'MARLIN-24', 'OSPREY-08', 'GULL-55'];
+
+/** The four weapon slots the HUD shows: keys 1-4, two locked until earned. */
+export const WEAPON_SLOTS = [
+  { key: '1', id: 'fists', name: 'Fists' },
+  { key: '2', id: 'pistol', name: 'Pistol' },
+  { key: '3', id: 'smg', name: 'Wasp SMG' },
+  { key: '4', id: 'shotgun', name: 'Harbor 12' },
+];
+
+/** Respect: the street's measure of Lena, 0-4, one per two missions done. */
+export const RESPECT = {
+  perMission: 0.5,
+  max: 4,
+  names: ['Unknown', 'Known', 'Respected', 'Feared', 'Legend'],
+};
+
+/** The car radio's three stations, each with its now-playing song and artist. */
+export const RADIO_SONGS = {
+  'Bay FM 87.9': { song: 'Neon Drive', artist: 'Pink Horizon' },
+  'Neon 101.5': { song: 'Sunset Run', artist: 'Lumen Kids' },
+  'Solmar Classics 94.3': { song: 'Harbor Lights', artist: 'Rosa Delgado' },
 };
 
 /** Effects: pool sizes for particles, smoke puffs and skid marks. */
@@ -235,16 +265,16 @@ export const PALETTE = {
   gold: '#f2c94c',
 };
 
-/** The story's eight missions, in order. Step 2 shows only the first objective line. */
+/** The story's eight missions, in order, each with its chapter and stage count. */
 export const MISSIONS = [
-  { name: 'Homecoming', objective: 'Drive Rosa\u2019s Alba to Old Harbor' },
-  { name: 'Courier Run', objective: 'Deliver three parcels across Palm Row' },
-  { name: 'The Tow Job', objective: 'Take the Vela GT without raising heat' },
-  { name: 'Harbor Lights', objective: 'Clear the dock' },
-  { name: 'Neon Mile', objective: 'Tail Kaine\u2019s courier through downtown' },
-  { name: 'High Tide', objective: 'Escape across the causeway at 4 stars' },
-  { name: 'Ghost Ledger', objective: 'Deliver Kaine\u2019s ledger to Chief Okafor' },
-  { name: 'Solmar Sunrise', objective: 'Bring Nico home to Rosa\u2019s garage' },
+  { name: 'Homecoming', chapter: 'CH 1', stages: 1, objective: 'Drive Rosa\u2019s Alba to Old Harbor' },
+  { name: 'Courier Run', chapter: 'CH 2', stages: 3, objective: 'Deliver three parcels across Palm Row' },
+  { name: 'The Tow Job', chapter: 'CH 3', stages: 3, objective: 'Take the Vela GT without raising heat' },
+  { name: 'Harbor Lights', chapter: 'CH 4', stages: 2, objective: 'Clear the dock' },
+  { name: 'Neon Mile', chapter: 'CH 5', stages: 3, objective: 'Tail Kaine\u2019s courier through downtown' },
+  { name: 'High Tide', chapter: 'CH 6', stages: 2, objective: 'Escape across the causeway at 4 stars' },
+  { name: 'Ghost Ledger', chapter: 'CH 7', stages: 3, objective: 'Deliver Kaine\u2019s ledger to Chief Okafor' },
+  { name: 'Solmar Sunrise', chapter: 'CH 8', stages: 3, objective: 'Bring Nico home to Rosa\u2019s garage' },
 ];
 
 /** Side activities (Step 5): taxi fares, courier runs, street races. */

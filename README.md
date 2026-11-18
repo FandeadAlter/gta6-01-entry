@@ -4,7 +4,7 @@
 [![rank](https://make.fun/badge/gta6-01/FandeadAlter/gta6-01-entry/rank.svg)](https://make.fun/bounty/gta6-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 [![reward](https://make.fun/badge/gta6-01/FandeadAlter/gta6-01-entry/reward.svg)](https://make.fun/bounty/gta6-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-01)
 
-Solmar Bay is a complete open-world crime game that runs in the browser: a sun-soaked fictional coastal city you explore on foot and by car, with traffic and pedestrians, cars you can steal, a five-star wanted system with police who chase you, and a six-mission story to play through. Around the story there are side activities, collectibles to hunt, a garage for the cars you keep, and a save that survives between visits. Three.js renders a low-poly procedural city in fixed golden-hour light, and every name, character, vehicle, sound and piece of art is original.
+Solmar Bay is a complete open-world crime game that runs in the browser: a sun-soaked fictional coastal city you explore on foot and by car, with traffic and pedestrians, cars you can steal, a five-star wanted system with police cruisers, roadblocks and a helicopter, and an eight-mission story to play through. Around the story there are side activities, collectibles to hunt, a garage for the cars you keep, and a save that survives between visits. The HUD shows the SBPD response list, four weapon slots, the mission stage and timer, the car radio's now-playing song, and a respect bar. Three.js renders a low-poly procedural city in fixed golden-hour light, and every name, character, vehicle, sound and piece of art is original.
 
 ## Play it
 

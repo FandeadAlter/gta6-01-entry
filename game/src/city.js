@@ -45,6 +45,11 @@ export function districtAt(x, z) {
   return 'midtown';
 }
 
+/** The district name at (x, z), for the HUD label and the shot staging. */
+export function districtNameAt(x, z) {
+  return DISTRICTS[districtAt(x, z)] ? DISTRICTS[districtAt(x, z)].name : 'Solmar Bay';
+}
+
 export function buildCity(scene, random) {
   const colliders = [];
   const palmSpots = [];

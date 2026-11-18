@@ -115,6 +115,14 @@ export class EffectsManager {
     };
   }
 
+  /** Clear every visible particle, puff and skid mark — used when a mission restarts. */
+  clearAll() {
+    for (const p of this.particles) p.mesh.visible = false;
+    for (const s of this.smoke) s.mesh.visible = false;
+    for (const s of this.skids) s.mesh.visible = false;
+    this.trauma = 0;
+  }
+
   update(dt) {
     this.time += dt;
     this.trauma = Math.max(0, this.trauma - dt * 1.6);

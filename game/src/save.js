@@ -8,6 +8,13 @@ import { SAVE_KEY, VEHICLES } from './config.js';
 
 export const SAVE_VERSION = 3;
 
+/** One line about a save for the title screen: money and missions done. */
+export function saveSummary(save) {
+  if (!save) return '';
+  const missions = save.missionsCompleted ?? 0;
+  return `$${(save.money ?? 0).toLocaleString('en-US')} · ${missions} mission${missions === 1 ? '' : 's'} done`;
+}
+
 /** The shape a save has on disk. Defaults are a fresh game at the garage. */
 export function defaultSave() {
   return {
